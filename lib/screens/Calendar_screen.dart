@@ -114,6 +114,32 @@ class _CalendarScreenState extends State<CalendarScreen> {
       MongoDatabase.getHourAndMinutesFromMongo(ch).values.first;
   int getMinutes(String ch) =>
       MongoDatabase.getHourAndMinutesFromMongo(ch).values.last;
+  List<int> getWeekendDays(String weekend) {
+    List<int> l = [];
+    if (weekend.contains('lundi')) {
+      l.add(1);
+    }
+    if (weekend.contains('mardi')) {
+      l.add(2);
+    }
+    if (weekend.contains('mercredi')) {
+      l.add(3);
+    }
+    if (weekend.contains('jeudi')) {
+      l.add(4);
+    }
+    if (weekend.contains('vendredi')) {
+      l.add(5);
+    }
+    if (weekend.contains('samedi')) {
+      l.add(6);
+    }
+    if (weekend.contains('dimanche')) {
+      l.add(7);
+    }
+    ;
+    return l;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -184,7 +210,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   wholeDayIsBookedWidget:
                       const Text('Désolé, pour ce jour tout est réservé'),
                   //disabledDates: [DateTime(2023, 1, 20)],
-                  disabledDays: [7],
+                  disabledDays: getWeekendDays(cal.weekend),
                 ),
               );
             }
