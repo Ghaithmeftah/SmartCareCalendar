@@ -40,6 +40,12 @@ class MongoDatabase {
     return users;
   }
 
+  static Map<String, int> getHourAndMinutesFromMongo(String ch) {
+    String h = ch[0] + ch[1];
+    String min = ch[3] + ch[4];
+    return {"hour": int.parse(h), "minites": int.parse(min)};
+  }
+
   static connect() async {
     //connect to the db using these two lines
     var db = await Db.create(MONGO_URL);
@@ -47,12 +53,16 @@ class MongoDatabase {
 
     inspect(db);
     //we had opened our collection name the COLLECTION_NAME = (DoctorsCalendar)
-    // var collection = db.collection(COLLECTION_NAME);
+    /*var collection = db.collection(COLLECTION_NAME);
     //now we are inserting this document
-    /*await collection.insertOne({
-      'username': 'mp',
-      'name': 'Ghaith Meftah',
-      'email': 'ghaithmeftah@gmail.com'
+    await collection.insertOne({
+      "id": "1",
+      "startTime": "08:00",
+      "endTime": "17:00",
+      "debut_pause": "12:00",
+      "fin_pause": "13:00",
+      "duration": "30",
+      "weekend": "dimanche"
     });*/
 
     //you're inserting a lot of data in one go

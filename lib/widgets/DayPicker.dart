@@ -48,14 +48,15 @@ class DayPicker extends StatelessWidget {
         ),
       ),
       onSelect: (values) {
-        String ch = "";
+        String Weekend = "";
         for (String s in values) {
-          ch += "$s,";
+          Weekend += "$s,";
         }
+
         //to do !!!! store the values in mongoDb
         // <== Callback to handle the selected days (values is a list of strings)
         print(values);
-        print("ch =$ch");
+        print("ch =$Weekend");
       },
     );
   }

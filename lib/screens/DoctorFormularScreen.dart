@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../widgets/DayPicker.dart';
 import './Calendar_screen.dart';
+import 'package:day_picker/day_picker.dart';
 
 import 'package:datetime_picker_formfield_new/datetime_picker_formfield.dart';
 
@@ -26,9 +26,37 @@ class _DoctorFormularScreenState extends State<DoctorFormularScreen> {
   final date_weekend_controller = TextEditingController();
   final debut_pause_controller = TextEditingController();
   final fin_pause_controller = TextEditingController();
+  String Weekend = "";
 
   @override
   Widget build(BuildContext context) {
+    List<DayInWeek> _days = [
+      DayInWeek(
+        "lun",
+        dayKey: 'lundi',
+      ),
+      DayInWeek(
+        "mar",
+        dayKey: 'mardi',
+      ),
+      DayInWeek("mer", dayKey: 'mercredi', isSelected: true),
+      DayInWeek(
+        "jeu",
+        dayKey: 'jeudi',
+      ),
+      DayInWeek(
+        "ven",
+        dayKey: 'vendredi',
+      ),
+      DayInWeek(
+        "sam",
+        dayKey: 'samedi',
+      ),
+      DayInWeek(
+        "dim",
+        dayKey: 'dimanche',
+      ),
+    ];
     String? _requiredValidator(String? text) {
       if (text == null || text.trim().isEmpty) {
         return 'this field is required';
@@ -194,7 +222,33 @@ class _DoctorFormularScreenState extends State<DoctorFormularScreen> {
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(30),
                         color: Colors.transparent),
-                    child: const Center(child: DayPicker()),
+                    child: Center(
+                      child: SelectWeekDays(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        days: _days,
+                        border: false,
+                        boxDecoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(30.0),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            colors: [Color(0xFFE55CE4), Color(0xFFBB75FB)],
+                            tileMode: TileMode
+                                .repeated, // repeats the gradient over the canvas
+                          ),
+                        ),
+                        onSelect: (values) {
+                          Weekend = "";
+                          for (String s in values) {
+                            Weekend += "$s,";
+                          }
+                          //to do !!!! store the values in mongoDb
+                          // <== Callback to handle the selected days (values is a list of strings)
+                          print(values);
+                          print("ch =$Weekend");
+                        },
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -220,7 +274,7 @@ class _DoctorFormularScreenState extends State<DoctorFormularScreen> {
                           debut_pause_controller.text,
                           fin_pause_controller.text,
                           duree_consultation_controller.text,
-                          date_weekend_controller.text);
+                          Weekend);
                       Navigator.push(
                         context,
                         MaterialPageRoute(

@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:booking_calendar/booking_calendar.dart';
+import 'package:smartcare_calender/models/Calendar.dart';
 import '../mongodb.dart';
 
 import './DoctorFormularScreen.dart';
@@ -14,19 +17,13 @@ class CalendarScreen extends StatefulWidget {
 class _CalendarScreenState extends State<CalendarScreen> {
   final now = DateTime.now();
   late BookingService mockBookingService;
-
-  /*int getDuration(Future<Calendar> cal) {
-    FutureBuilder<Calendar>(
-      future: cal,
-      builder: (context, snapshot) => BookingService(
-        serviceName: 'Mock Service',
-        //La durée du consultaion !!!!! est 30 min
-        serviceDuration: 30,
-        //18h est le temps dont le médecin vas retourner à la maison
-        bookingEnd: DateTime(now.year, now.month, now.day, 18, 0),
-        //8h est l'heure de début de travail
-        bookingStart: DateTime(now.year, now.month, now.day, 8, 0));,)
-  }*/
+  List<Map<String, dynamic>> data = [];
+  @override
+  void didChangeDependencies() {
+    // TODO: implement didChangeDependencies
+    super.didChangeDependencies();
+    fetchData();
+  }
 
   @override
   void initState() {
@@ -34,14 +31,32 @@ class _CalendarScreenState extends State<CalendarScreen> {
     //Future<Calendar> cal = MongoDatabase.getData();
     // DateTime.now().startOfDay
     // DateTime.now().endOfDay
-    mockBookingService = BookingService(
+
+    // Fetch data initially when the screen loads
+    fetchData();
+    // Schedule periodic data refresh every 1 minute
+    //Timer.periodic(Duration(minutes: 1), (_) => fetchData());
+    /*mockBookingService = BookingService(
         serviceName: 'Mock Service',
         //La durée du consultaion !!!!! est 30 min
         serviceDuration: 30,
         //18h est le temps dont le médecin vas retourner à la maison
         bookingEnd: DateTime(now.year, now.month, now.day, 18, 0),
         //8h est l'heure de début de travail
-        bookingStart: DateTime(now.year, now.month, now.day, 8, 0));
+        bookingStart: DateTime(now.year, now.month, now.day, 8, 0));*/
+  }
+
+  Future<void> fetchData() async {
+    try {
+      List<Map<String, dynamic>> newData = await MongoDatabase.getDocument();
+      setState(() {
+        data = newData;
+      });
+      print(data);
+    } catch (error) {
+      // Handle any errors that occurred during data fetch
+      print('Error: $error');
+    }
   }
 
   Stream<dynamic>? getBookingStreamMock(
@@ -84,14 +99,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return converted;
   }
 
-  List<DateTimeRange> generatePauseSlots() {
+  List<DateTimeRange> generatePauseSlots(String debutPause, String finPause) {
     return [
       DateTimeRange(
           //la pause déjeuner est de 12H à 13h !!!!
-          start: DateTime(now.year, now.month, now.day, 12, 0),
-          end: DateTime(now.year, now.month, now.day, 13, 0))
+          start: DateTime(now.year, now.month, now.day, getHour(debutPause),
+              getMinutes(debutPause)),
+          end: DateTime(now.year, now.month, now.day, getHour(finPause),
+              getMinutes(finPause)))
     ];
   }
+
+  int getHour(String ch) =>
+      MongoDatabase.getHourAndMinutesFromMongo(ch).values.first;
+  int getMinutes(String ch) =>
+      MongoDatabase.getHourAndMinutesFromMongo(ch).values.last;
 
   @override
   Widget build(BuildContext context) {
@@ -124,26 +146,36 @@ class _CalendarScreenState extends State<CalendarScreen> {
               // If an error occurred while fetching the data
               return Text('Error: ${snapshot.error}');
             } else {
+              Calendar cal = Calendar(
+                snapshot.data![0]['id'],
+                snapshot.data![0]['startTime'],
+                snapshot.data![0]['endTime'],
+                snapshot.data![0]['debut_pause'],
+                snapshot.data![0]['fin_pause'],
+                snapshot.data![0]['duration'],
+                snapshot.data![0]['weekend'],
+              );
               mockBookingService = BookingService(
                   serviceName: 'Mock Service',
                   //La durée du consultaion !!!!! exemple (30 min) ( this line get it's value from MongoDb )
-                  serviceDuration: int.parse(snapshot.data![0]['duration']),
+                  serviceDuration: int.parse(cal.duration),
                   //18h est le temps dont le médecin vas retourner à la maison
-                  bookingEnd: DateTime(now.year, now.month, now.day, 18, 0),
+                  bookingEnd: DateTime(now.year, now.month, now.day,
+                      getHour(cal.endTime), getMinutes(cal.endTime)),
                   //8h est l'heure de début de travail
-                  bookingStart: DateTime(now.year, now.month, now.day, 8, 0));
+                  bookingStart: DateTime(now.year, now.month, now.day,
+                      getHour(cal.startTime), getMinutes(cal.startTime)));
               return Center(
                 child: BookingCalendar(
                   bookingService: mockBookingService,
                   convertStreamResultToDateTimeRanges: convertStreamResultMock,
                   getBookingStream: getBookingStreamMock,
                   uploadBooking: uploadBookingMock,
-                  pauseSlots: generatePauseSlots(),
+                  pauseSlots: generatePauseSlots(cal.debutPause, cal.finPause),
                   availableSlotText: 'Disponible',
                   selectedSlotText: 'sélectionnée',
                   bookedSlotText: 'réservée',
                   pauseSlotText: 'DÉJEUNER',
-
                   hideBreakTime: false,
                   loadingWidget: const Text('Récupération des données...'),
                   uploadingWidget: const CircularProgressIndicator(),

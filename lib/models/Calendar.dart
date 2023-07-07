@@ -1,17 +1,17 @@
-import 'package:mongo_dart/mongo_dart.dart';
-
 class Calendar {
-  final ObjectId id;
+  final String id;
   final String startTime;
   final String endTime;
-  final String pause;
+  final String debutPause;
+  final String finPause;
   String duration;
   final String weekend;
   Calendar(
     this.id,
     this.startTime,
     this.endTime,
-    this.pause,
+    this.debutPause,
+    this.finPause,
     this.duration,
     this.weekend,
   );
