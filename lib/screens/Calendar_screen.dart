@@ -1,11 +1,13 @@
 import 'dart:async';
-
+import '../colors.dart';
 import 'package:flutter/material.dart';
 import 'package:booking_calendar/booking_calendar.dart';
-import 'package:smartcare_calender/models/Calendar.dart';
+import '../db/MongoWithFastApi.dart';
+import '../models/Calendar.dart';
+import '../widgets/bottom_navigation_bar_widget.dart';
 import '../mongodb.dart';
 
-import './DoctorFormularScreen.dart';
+import './DoctorFormularScreenFastApi.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({Key? key}) : super(key: key);
@@ -17,7 +19,7 @@ class CalendarScreen extends StatefulWidget {
 class _CalendarScreenState extends State<CalendarScreen> {
   final now = DateTime.now();
   late BookingService mockBookingService;
-  List<Map<String, dynamic>> data = [];
+  Map<String, dynamic> data = {};
   @override
   void didChangeDependencies() {
     // TODO: implement didChangeDependencies
@@ -34,8 +36,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
     // Fetch data initially when the screen loads
     fetchData();
-    // Schedule periodic data refresh every 1 minute
-    //Timer.periodic(Duration(minutes: 1), (_) => fetchData());
     /*mockBookingService = BookingService(
         serviceName: 'Mock Service',
         //La durée du consultaion !!!!! est 30 min
@@ -48,7 +48,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Future<void> fetchData() async {
     try {
-      List<Map<String, dynamic>> newData = await MongoDatabase.getDocument();
+      //List<Map<String, dynamic>> newData = await MongoDatabase.getDocument();
+      Map<String, dynamic> newData = await FastApi.fetchCalendar();
       setState(() {
         data = newData;
       });
@@ -137,34 +138,72 @@ class _CalendarScreenState extends State<CalendarScreen> {
     if (weekend.contains('dimanche')) {
       l.add(7);
     }
-    ;
+
     return l;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: const BottomNavigationBarWidget(),
       appBar: AppBar(
-        title: const Text('Calendrier de réservation'),
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(
-              Icons.settings,
-              color: Colors.white,
+        toolbarHeight: 40,
+        backgroundColor: const Color(0xffffffff),
+        title: Row(
+          children: <Widget>[
+            Image.asset(
+              'lib/assets/logo-symbol.png', // Replace with your small logo image
+              width: 40,
+              height: 40,
             ),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => DoctorFormularScreen(),
+            const SizedBox(width: 8),
+
+            const Text("Calendrier de réservation",
+                style: TextStyle(
+                    fontSize: 20,
+                    color: AppColors.black,
+                    fontWeight: FontWeight.bold)),
+            // Add your welcome text here
+          ],
+        ),
+        automaticallyImplyLeading: false,
+        actions: <Widget>[
+          Ink(
+            child: InkWell(
+              onTap: () {},
+              child: Image.asset(
+                "lib/assets/icons/profile.png",
+                height: 45,
+                width: 45,
+                color: const Color(0xff686868),
+              ),
+            ),
+          ),
+          Ink(
+            child: InkWell(
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  //    FastAPI   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                  builder: (context) => const DoctorFormularScreenFastAPI(),
+                ),
+              ),
+              child: const Padding(
+                padding: EdgeInsets.only(right: 8.0, left: 8.0),
+                child: Icon(
+                  Icons.settings,
+                  size: 35,
+                  color: Color(0xff686868),
+                ),
               ),
             ),
           ),
         ],
       ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-          future: MongoDatabase.getDocument(),
-          builder:
-              (context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
+      body: FutureBuilder<Map<String, dynamic>>(
+          // future: MongoDatabase.getDocument(),
+          future: FastApi.fetchCalendar(),
+          builder: (context, AsyncSnapshot<Map<String, dynamic>> snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               // While waiting for data to load
               return const Center(child: CircularProgressIndicator());
@@ -173,13 +212,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
               return Text('Error: ${snapshot.error}');
             } else {
               Calendar cal = Calendar(
-                snapshot.data![0]['id'],
-                snapshot.data![0]['startTime'],
-                snapshot.data![0]['endTime'],
-                snapshot.data![0]['debut_pause'],
-                snapshot.data![0]['fin_pause'],
-                snapshot.data![0]['duration'],
-                snapshot.data![0]['weekend'],
+                snapshot.data!['start_work_time'],
+                snapshot.data!['end_work_time'],
+                snapshot.data!['start_pause_time'],
+                snapshot.data!['end_pause_time'],
+                snapshot.data!['appointment_duration'],
+                snapshot.data!['weekend_days'],
               );
               mockBookingService = BookingService(
                   serviceName: 'Mock Service',
@@ -209,8 +247,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   startingDayOfWeek: StartingDayOfWeek.monday,
                   wholeDayIsBookedWidget:
                       const Text('Désolé, pour ce jour tout est réservé'),
-                  //disabledDates: [DateTime(2023, 1, 20)],
+                  disabledDates: [DateTime(2023, 8, 21)],
+                  bookingButtonText: "Confirmer",
+                  bookingButtonColor: const Color(0xFF4d6466),
                   disabledDays: getWeekendDays(cal.weekend),
+                  pauseSlotColor: const Color(0xffeef3d8),
+                  bookedSlotColor: const Color(0xFFf0787a),
+                  availableSlotColor: const Color(0xffd1d3de),
+                  selectedSlotColor: const Color(0xff789e9e),
                 ),
               );
             }

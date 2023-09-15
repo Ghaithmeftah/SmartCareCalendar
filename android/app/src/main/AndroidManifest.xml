@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.smartcare_calender">
+  <uses-permission android:name="android.permission.INTERNET"/>
    <application
         android:label="smartcare_calender"
         android:name="${applicationName}"

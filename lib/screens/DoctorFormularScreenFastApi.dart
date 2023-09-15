@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:smartcare_calender/widgets/bottom_navigation_bar_widget.dart';
-import 'package:smartcare_calender/widgets/date_picker.dart';
+import '../db/MongoWithFastApi.dart';
+import '../widgets/bottom_navigation_bar_widget.dart';
+import '../widgets/date_picker.dart';
 import './Calendar_screen.dart';
 import 'package:day_picker/day_picker.dart';
 
 import 'package:datetime_picker_formfield_new/datetime_picker_formfield.dart';
-//import 'package:custom_date_range_picker/custom_date_range_picker.dart';
 
-import '../mongodb.dart';
-
-class DoctorFormularScreen extends StatefulWidget {
-  const DoctorFormularScreen({Key? key}) : super(key: key);
+class DoctorFormularScreenFastAPI extends StatefulWidget {
+  const DoctorFormularScreenFastAPI({Key? key}) : super(key: key);
 
   @override
-  State<DoctorFormularScreen> createState() => _DoctorFormularScreenState();
+  State<DoctorFormularScreenFastAPI> createState() =>
+      _DoctorFormularScreenFastAPIState();
 }
 
-class _DoctorFormularScreenState extends State<DoctorFormularScreen> {
+class _DoctorFormularScreenFastAPIState
+    extends State<DoctorFormularScreenFastAPI> {
   final format = DateFormat("HH:mm");
 
   //create a key for the Form widget
@@ -29,7 +29,7 @@ class _DoctorFormularScreenState extends State<DoctorFormularScreen> {
   final date_weekend_controller = TextEditingController();
   final debut_pause_controller = TextEditingController();
   final fin_pause_controller = TextEditingController();
-  String Weekend = "";
+  String Weekend = "dimanche";
   DateTime? startDate;
   DateTime? endDate;
 
@@ -369,7 +369,7 @@ class _DoctorFormularScreenState extends State<DoctorFormularScreen> {
                     if (_formkey.currentState != null &&
                         _formkey.currentState!.validate()) {
                       //insert the calendar data in mongodb
-                      MongoDatabase.UpdateCalendar(
+                      FastApi.createOrUpdateCalendar(
                         heure_debut_Controller.text,
                         heure_fin_Controller.text,
                         debut_pause_controller.text,

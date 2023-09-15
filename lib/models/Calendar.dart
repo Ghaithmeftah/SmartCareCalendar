@@ -1,5 +1,4 @@
 class Calendar {
-  final String id;
   final String startTime;
   final String endTime;
   final String debutPause;
@@ -7,7 +6,6 @@ class Calendar {
   String duration;
   final String weekend;
   Calendar(
-    this.id,
     this.startTime,
     this.endTime,
     this.debutPause,

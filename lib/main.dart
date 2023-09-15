@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:smartcare_calender/models/RangeSliderModel.dart';
 import '../screens/Calendar_screen.dart';
 import './mongodb.dart';
+import '../screens/Patient_screen.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await MongoDatabase.connect();
-  initializeDateFormatting()
-      .then((_) => runApp(const BookingCalendarDemoApp()));
+  initializeDateFormatting().then((_) => runApp(ChangeNotifierProvider(
+      create: (_) => RangeSliderModelNotifier(),
+      child: const BookingCalendarDemoApp())));
 }
 
 class BookingCalendarDemoApp extends StatelessWidget {
@@ -45,7 +49,7 @@ class MyApp extends StatelessWidget {
                 borderRadius: BorderRadius.circular(30),
                 color: Colors.lightBlueAccent),
             child: MaterialButton(
-              child: Text("You're a Doctor"),
+              child: const Text("You're a Doctor"),
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -64,8 +68,13 @@ class MyApp extends StatelessWidget {
                 borderRadius: BorderRadius.circular(30),
                 color: Colors.lightBlueAccent),
             child: TextButton(
-              child: Text("You're a Patient"),
-              onPressed: null,
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PatientScreen(),
+                ),
+              ),
+              child: const Text("You're a Patient"),
             ),
           ),
         ],
