@@ -112,6 +112,7 @@ class _BookingCalendarMainState extends State<BookingCalendarMain>
   late BookingController controller;
   final now = DateTime.now();
   late AnimationController _animationController;
+  final textFieldController = TextEditingController();
 
   @override
   void initState() {
@@ -171,25 +172,60 @@ class _BookingCalendarMainState extends State<BookingCalendarMain>
   @override
   void dispose() {
     _animationController.dispose();
+    //textFieldController.dispose();
     super.dispose();
   }
 
   String formatDateTime(DateTime dateTime) {
     final frenchDateFormat = DateFormat('EEEE dd/MM/yyyy', 'fr_FR');
-    return frenchDateFormat.format(dateTime);
+    String day = frenchDateFormat.format(dateTime)[0].toUpperCase() +
+        frenchDateFormat.format(dateTime).substring(1);
+    return day;
   }
 
   @override
   Widget build(BuildContext context) {
     controller = context.watch<BookingController>();
     final sliderModelNotifier = Provider.of<RangeSliderModelNotifier>(context);
+    Future openDialog() => showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+              title: const Text('Motif de consultation du patient :'),
+              content: TextField(
+                autofocus: true,
+                controller: textFieldController,
+                decoration:
+                    const InputDecoration(hintText: 'Décrivez votre état ...'),
+              ),
+              actions: [
+                TextButton(
+                    onPressed: () async {
+                      controller.toggleUploading();
+                      controller.toggleSlotChanging(controller.slot);
+                      await widget.uploadBooking(
+                          newBooking: controller
+                              .generateNewBookingForUploading(controller.slot));
+                      FastApi.takeAppointment(
+                          controller.slot, textFieldController.text);
+                      controller.toggleUploading();
+                      controller.resetSelectedSlot();
+
+                      Navigator.of(context).pop();
+                      textFieldController.clear();
+                    },
+                    child: const Text(
+                      'Confirmer',
+                      style: TextStyle(color: AppColors.darkgrey),
+                    ))
+              ],
+            ));
 
     return Consumer<BookingController>(
       builder: (_, controller, __) => Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: (controller.isUploading)
             ? widget.uploadingWidget ?? const BookingDialog()
-            : Column(
+            : ListView(
                 children: [
                   CommonCard(
                     child: TableCalendar(
@@ -337,7 +373,7 @@ class _BookingCalendarMainState extends State<BookingCalendarMain>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 15),
                   StreamBuilder<dynamic>(
                     stream: widget.getBookingStream(
                         start: startOfDay, end: endOfDay),
@@ -360,283 +396,271 @@ class _BookingCalendarMainState extends State<BookingCalendarMain>
                           widget.convertStreamResultToDateTimeRanges(
                               streamResult: data));
 
-                      return Expanded(
-                        child: (widget.wholeDayIsBookedWidget != null &&
-                                controller.isWholeDayBooked())
-                            ? SingleChildScrollView(
-                                child: widget.wholeDayIsBookedWidget!)
-                            : SingleChildScrollView(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      height: 30,
-                                      decoration: BoxDecoration(
-                                        color: Colors
-                                            .white, // Background color of the container
-                                        borderRadius: const BorderRadius.only(
-                                          topLeft: Radius.circular(
-                                              10), // Top-left corner radius
-                                          topRight: Radius.circular(
-                                              10), // Top-right corner radius
-                                        ), // Rounded corners, adjust the value as needed
-                                        border: Border.all(
-                                          color: AppColors
-                                              .softGrey, // Border color
-                                          width: 1, // Border width
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        children: [
-                                          const Padding(
-                                              padding:
-                                                  EdgeInsets.only(left: 20)),
-                                          const FaIcon(
-                                              FontAwesomeIcons.calendarDay),
-                                          const Padding(
-                                              padding:
-                                                  EdgeInsets.only(left: 20)),
-                                          Text(formatDateTime(controller.base))
-                                        ],
+                      return (widget.wholeDayIsBookedWidget != null &&
+                              controller.isWholeDayBooked())
+                          ? SingleChildScrollView(
+                              child: widget.wholeDayIsBookedWidget!)
+                          : SingleChildScrollView(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    height: 35,
+                                    decoration: BoxDecoration(
+                                      color: Colors
+                                          .white, // Background color of the container
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(
+                                            10), // Top-left corner radius
+                                        topRight: Radius.circular(
+                                            10), // Top-right corner radius
+                                      ), // Rounded corners, adjust the value as needed
+                                      border: Border.all(
+                                        color:
+                                            AppColors.softGrey, // Border color
+                                        width: 1, // Border width
                                       ),
                                     ),
-                                    Column(
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
                                       children: [
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 20),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius:
-                                                const BorderRadius.only(
-                                              bottomLeft: Radius.circular(10),
-                                              bottomRight: Radius.circular(10),
-                                            ),
-                                            border: Border.all(
-                                              color:
-                                                  Colors.grey, // Border color
-                                              width: 1, // Border width
-                                            ),
+                                        const Padding(
+                                            padding: EdgeInsets.only(left: 20)),
+                                        const FaIcon(
+                                          FontAwesomeIcons.calendarDay,
+                                          size: 18,
+                                        ),
+                                        const Padding(
+                                            padding: EdgeInsets.only(left: 10)),
+                                        Text(formatDateTime(controller.base)),
+                                      ],
+                                    ),
+                                  ),
+                                  Column(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: const BorderRadius.only(
+                                            bottomLeft: Radius.circular(10),
+                                            bottomRight: Radius.circular(10),
                                           ),
-                                          height: 200,
-                                          // Set the desired height of the GridView here
-                                          child: SingleChildScrollView(
-                                            child: Column(children: [
-                                              GridView.builder(
-                                                shrinkWrap: true,
-                                                physics: widget
-                                                        .gridScrollPhysics ??
-                                                    const BouncingScrollPhysics(),
-                                                itemCount: controller
-                                                    .filterMorningPauseSlots(
-                                                        sliderModelNotifier
-                                                            .sliderModel
-                                                            .startMorningTime,
-                                                        sliderModelNotifier
-                                                            .sliderModel
-                                                            .endMorningTime)
-                                                    .length,
-                                                itemBuilder: (context, index) {
-                                                  TextStyle? getTextStyle() {
-                                                    if (controller
-                                                        .isMorningSlotBooked(
-                                                            index)) {
-                                                      return widget
-                                                          .bookedSlotTextStyle;
-                                                    } else if (index ==
-                                                        controller
-                                                            .selectedMorningSlot) {
-                                                      return widget
-                                                          .selectedSlotTextStyle;
-                                                    } else {
-                                                      return widget
-                                                          .availableSlotTextStyle;
-                                                    }
+                                          border: Border.all(
+                                            color: Colors.grey, // Border color
+                                            width: 1, // Border width
+                                          ),
+                                        ),
+                                        height: 180,
+                                        // Set the desired height of the GridView here
+                                        child: SingleChildScrollView(
+                                          child: Column(children: [
+                                            GridView.builder(
+                                              shrinkWrap: true,
+                                              physics: widget
+                                                      .gridScrollPhysics ??
+                                                  const BouncingScrollPhysics(),
+                                              itemCount: controller
+                                                  .filterMorningPauseSlots(
+                                                      sliderModelNotifier
+                                                          .sliderModel
+                                                          .startMorningTime!,
+                                                      sliderModelNotifier
+                                                          .sliderModel
+                                                          .endMorningTime!)
+                                                  .length,
+                                              itemBuilder: (context, index) {
+                                                TextStyle? getTextStyle() {
+                                                  if (controller
+                                                      .isMorningSlotBooked(
+                                                          index)) {
+                                                    return widget
+                                                        .bookedSlotTextStyle;
+                                                  } else if (index ==
+                                                      controller
+                                                          .selectedMorningSlot) {
+                                                    return widget
+                                                        .selectedSlotTextStyle;
+                                                  } else {
+                                                    return widget
+                                                        .availableSlotTextStyle;
                                                   }
+                                                }
 
-                                                  List<DateTime> MorningSlots =
-                                                      controller.filterMorningPauseSlots(
-                                                          sliderModelNotifier
-                                                              .sliderModel
-                                                              .startMorningTime,
-                                                          sliderModelNotifier
-                                                              .sliderModel
-                                                              .endMorningTime);
-                                                  final Morningslot =
-                                                      MorningSlots.elementAt(
-                                                          index);
-                                                  return BookingSlot(
-                                                    hideBreakSlot:
-                                                        widget.hideBreakTime,
-                                                    pauseSlotColor:
-                                                        widget.pauseSlotColor,
-                                                    availableSlotColor: widget
-                                                        .availableSlotColor,
-                                                    bookedSlotColor:
-                                                        widget.bookedSlotColor,
-                                                    selectedSlotColor: widget
-                                                        .selectedSlotColor,
-                                                    isPauseTime: controller
-                                                        .isSlotInPauseTime(
-                                                            Morningslot),
-                                                    isBooked: controller
-                                                        .isMorningSlotBooked(
-                                                            index),
-                                                    isSelected: index ==
-                                                        controller
-                                                            .selectedMorningSlot,
-                                                    onTap: () => controller
-                                                        .selectMorningSlot(
-                                                            index, Morningslot),
-                                                    child: Center(
-                                                      child: Text(
-                                                        widget.formatDateTime
-                                                                ?.call(
-                                                                    Morningslot) ??
-                                                            BookingUtil
-                                                                .formatDateTime(
-                                                                    Morningslot),
-                                                        style: getTextStyle(),
-                                                      ),
+                                                List<DateTime> MorningSlots =
+                                                    controller
+                                                        .filterMorningPauseSlots(
+                                                            sliderModelNotifier
+                                                                .sliderModel
+                                                                .startMorningTime!,
+                                                            sliderModelNotifier
+                                                                .sliderModel
+                                                                .endMorningTime!);
+                                                final Morningslot =
+                                                    MorningSlots.elementAt(
+                                                        index);
+                                                return BookingSlot(
+                                                  hideBreakSlot:
+                                                      widget.hideBreakTime,
+                                                  pauseSlotColor:
+                                                      widget.pauseSlotColor,
+                                                  availableSlotColor:
+                                                      widget.availableSlotColor,
+                                                  bookedSlotColor:
+                                                      widget.bookedSlotColor,
+                                                  selectedSlotColor:
+                                                      widget.selectedSlotColor,
+                                                  isPauseTime: controller
+                                                      .isSlotInPauseTime(
+                                                          Morningslot),
+                                                  isBooked: controller
+                                                      .isMorningSlotBooked(
+                                                          index),
+                                                  isSelected: index ==
+                                                      controller
+                                                          .selectedMorningSlot,
+                                                  onTap: () => controller
+                                                      .selectMorningSlot(
+                                                          index, Morningslot),
+                                                  child: Center(
+                                                    child: Text(
+                                                      widget.formatDateTime
+                                                              ?.call(
+                                                                  Morningslot) ??
+                                                          BookingUtil
+                                                              .formatDateTime(
+                                                                  Morningslot),
+                                                      style: getTextStyle(),
                                                     ),
-                                                  );
-                                                },
-                                                gridDelegate:
-                                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                                  crossAxisCount: widget
-                                                          .bookingGridCrossAxisCount ??
-                                                      4,
-                                                  childAspectRatio: widget
-                                                          .bookingGridChildAspectRatio ??
-                                                      2,
-                                                ),
+                                                  ),
+                                                );
+                                              },
+                                              gridDelegate:
+                                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                                crossAxisCount: widget
+                                                        .bookingGridCrossAxisCount ??
+                                                    4,
+                                                childAspectRatio: widget
+                                                        .bookingGridChildAspectRatio ??
+                                                    2,
                                               ),
-                                              const Padding(
-                                                  padding: EdgeInsets.symmetric(
-                                                      vertical: 5)),
-                                              const Divider(
-                                                height: 6,
-                                                color: Colors.black,
-                                              ),
-                                              GridView.builder(
-                                                shrinkWrap: true,
-                                                physics: widget
-                                                        .gridScrollPhysics ??
-                                                    const BouncingScrollPhysics(),
-                                                itemCount: controller
+                                            ),
+                                            const Padding(
+                                                padding: EdgeInsets.symmetric(
+                                                    vertical: 5)),
+                                            const Divider(
+                                              height: 6,
+                                              color: Colors.black,
+                                            ),
+                                            GridView.builder(
+                                              shrinkWrap: true,
+                                              physics: widget
+                                                      .gridScrollPhysics ??
+                                                  const BouncingScrollPhysics(),
+                                              itemCount: controller
+                                                  .filtereveningPauseSlots(
+                                                      sliderModelNotifier
+                                                          .sliderModel
+                                                          .startAfternoonTime!,
+                                                      sliderModelNotifier
+                                                          .sliderModel
+                                                          .endAfternoonTime!)
+                                                  .length,
+                                              itemBuilder: (context, index) {
+                                                TextStyle? getTextStyle() {
+                                                  if (controller
+                                                      .isEveningSlotBooked(
+                                                          index)) {
+                                                    return widget
+                                                        .bookedSlotTextStyle;
+                                                  } else if (index ==
+                                                      controller
+                                                          .selectedEveningSlot) {
+                                                    return widget
+                                                        .selectedSlotTextStyle;
+                                                  } else {
+                                                    return widget
+                                                        .availableSlotTextStyle;
+                                                  }
+                                                }
+
+                                                final eveningSlot = controller
                                                     .filtereveningPauseSlots(
                                                         sliderModelNotifier
                                                             .sliderModel
-                                                            .startAfternoonTime,
+                                                            .startAfternoonTime!,
                                                         sliderModelNotifier
                                                             .sliderModel
-                                                            .endAfternoonTime)
-                                                    .length,
-                                                itemBuilder: (context, index) {
-                                                  TextStyle? getTextStyle() {
-                                                    if (controller
-                                                        .isEveningSlotBooked(
-                                                            index)) {
-                                                      return widget
-                                                          .bookedSlotTextStyle;
-                                                    } else if (index ==
-                                                        controller
-                                                            .selectedEveningSlot) {
-                                                      return widget
-                                                          .selectedSlotTextStyle;
-                                                    } else {
-                                                      return widget
-                                                          .availableSlotTextStyle;
-                                                    }
-                                                  }
+                                                            .endAfternoonTime!)
+                                                    .elementAt(index);
 
-                                                  final eveningSlot = controller
-                                                      .filtereveningPauseSlots(
-                                                          sliderModelNotifier
-                                                              .sliderModel
-                                                              .startAfternoonTime,
-                                                          sliderModelNotifier
-                                                              .sliderModel
-                                                              .endAfternoonTime)
-                                                      .elementAt(index);
-
-                                                  return BookingSlot(
-                                                    hideBreakSlot:
-                                                        widget.hideBreakTime,
-                                                    pauseSlotColor:
-                                                        widget.pauseSlotColor,
-                                                    availableSlotColor: widget
-                                                        .availableSlotColor,
-                                                    bookedSlotColor:
-                                                        widget.bookedSlotColor,
-                                                    selectedSlotColor: widget
-                                                        .selectedSlotColor,
-                                                    isPauseTime: controller
-                                                        .isSlotInPauseTime(
-                                                            eveningSlot),
-                                                    isBooked: controller
-                                                        .isEveningSlotBooked(
-                                                            index),
-                                                    isSelected: index ==
-                                                        controller
-                                                            .selectedEveningSlot,
-                                                    onTap: () => controller
-                                                        .selectEveningSlot(
-                                                            index, eveningSlot),
-                                                    child: Center(
-                                                      child: Text(
-                                                        widget.formatDateTime
-                                                                ?.call(
-                                                                    eveningSlot) ??
-                                                            BookingUtil
-                                                                .formatDateTime(
-                                                                    eveningSlot),
-                                                        style: getTextStyle(),
-                                                      ),
+                                                return BookingSlot(
+                                                  hideBreakSlot:
+                                                      widget.hideBreakTime,
+                                                  pauseSlotColor:
+                                                      widget.pauseSlotColor,
+                                                  availableSlotColor:
+                                                      widget.availableSlotColor,
+                                                  bookedSlotColor:
+                                                      widget.bookedSlotColor,
+                                                  selectedSlotColor:
+                                                      widget.selectedSlotColor,
+                                                  isPauseTime: controller
+                                                      .isSlotInPauseTime(
+                                                          eveningSlot),
+                                                  isBooked: controller
+                                                      .isEveningSlotBooked(
+                                                          index),
+                                                  isSelected: index ==
+                                                      controller
+                                                          .selectedEveningSlot,
+                                                  onTap: () => controller
+                                                      .selectEveningSlot(
+                                                          index, eveningSlot),
+                                                  child: Center(
+                                                    child: Text(
+                                                      widget.formatDateTime
+                                                              ?.call(
+                                                                  eveningSlot) ??
+                                                          BookingUtil
+                                                              .formatDateTime(
+                                                                  eveningSlot),
+                                                      style: getTextStyle(),
                                                     ),
-                                                  );
-                                                },
-                                                gridDelegate:
-                                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                                  crossAxisCount: widget
-                                                          .bookingGridCrossAxisCount ??
-                                                      4,
-                                                  childAspectRatio: widget
-                                                          .bookingGridChildAspectRatio ??
-                                                      2,
-                                                ),
+                                                  ),
+                                                );
+                                              },
+                                              gridDelegate:
+                                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                                crossAxisCount: widget
+                                                        .bookingGridCrossAxisCount ??
+                                                    4,
+                                                childAspectRatio: widget
+                                                        .bookingGridChildAspectRatio ??
+                                                    2,
                                               ),
-                                              const Padding(
-                                                  padding: EdgeInsets.all(10))
-                                            ]),
-                                          ),
+                                            ),
+                                            const Padding(
+                                                padding: EdgeInsets.all(10))
+                                          ]),
                                         ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
-                      );
+                            );
                     },
                   ),
                   const SizedBox(
-                    height: 16,
+                    height: 8,
                   ),
                   CommonButton(
-                    width: 200,
+                    width: 80,
                     text: widget.bookingButtonText ?? 'BOOK',
-                    onTap: () async {
-                      controller.toggleUploading();
-                      controller.toggleSlotChanging(controller.slot);
-                      await widget.uploadBooking(
-                          newBooking: controller
-                              .generateNewBookingForUploading(controller.slot));
-                      FastApi.takeAppointment(controller.slot);
-                      controller.toggleUploading();
-                      controller.resetSelectedSlot();
-                    },
+                    onTap: openDialog,
                     isDisabled: controller.selectedMorningSlot == -1 &&
                         controller.selectedEveningSlot == -1,
                     // isDesabled: controller.selectedSlot == -1,

@@ -98,14 +98,15 @@ class FastApi {
     }
   }
 
-  static Future<http.Response> takeAppointment(DateTime datetime) async {
+  static Future<http.Response> takeAppointment(DateTime datetime, String motiv,
+      {String? patientName}) async {
     String formattedDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(datetime);
     final date = formattedDate.substring(0, 11).trim();
     final time = formattedDate.substring(11, 19).trim();
     //don't forget to change the doctor_id IN THE URL !!!!!!!!!
     final response = await http.post(
       Uri.parse(
-          "$endpoint/appointment/take_appointment?date=$date&time=$time&doctor_id=6243287fba6458d2b04ddf44&motiv=I feel bad"),
+          "$endpoint/appointment/take_appointment?date=$date&time=$time&doctor_id=6243287fba6458d2b04ddf44&motiv=$motiv&patient_name=$patientName"),
       headers: {'Content-Type': 'application/json'},
     );
     return response;
@@ -138,17 +139,28 @@ class FastApi {
       String start_pause_time,
       String end_pause_time,
       String appointment_duration,
-      String weekend_days) async {
+      String weekend_days,
+      List<String?> free_dates) async {
     // First, try to fetch the doctor's calendar using his ID.
     final existingCalendarResponse = await http.get(
       Uri.parse(
           "$endpoint/doctor/get_doctor_calendar_by_id?doctor_id=6243287fba6458d2b04ddf44"),
     );
+
     if (existingCalendarResponse.statusCode == 200) {
+      // Parse the JSON response into a Dart object
+      final Map<String, dynamic> calendarData =
+          json.decode(existingCalendarResponse.body);
+
+      // Access the 'free_dates' attribute from the parsed object
+      final List<String?> olderDates =
+          List<String?>.from(calendarData['free_dates']);
+      olderDates.addAll(free_dates);
+      final List<String?> all_free_dates = olderDates;
       // The calendar already exists, so we need to update it.
-      final response = await http.put(
+      final response = await http.post(
         Uri.parse(
-            '$endpoint/doctor/create_or_update_doctor_calendar?doctor_id=6243287fba6458d2b04ddf44'),
+            '$endpoint/doctor/create_or_update_doctor_calendar?owner_id=6243287fba6458d2b04ddf44'),
         body: json.encode({
           "start_work_time": start_work_time,
           "end_work_time": end_work_time,
@@ -156,6 +168,7 @@ class FastApi {
           "end_pause_time": end_pause_time,
           "appointment_duration": appointment_duration,
           "weekend_days": weekend_days,
+          "free_dates": all_free_dates,
         }),
         headers: {'Content-Type': 'application/json'},
       );

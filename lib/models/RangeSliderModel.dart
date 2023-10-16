@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 class RangeSliderModel {
-  TimeOfDay startMorningTime;
-  TimeOfDay endMorningTime;
-  TimeOfDay startAfternoonTime;
-  TimeOfDay endAfternoonTime;
+  TimeOfDay? startMorningTime;
+  TimeOfDay? endMorningTime;
+  TimeOfDay? startAfternoonTime;
+  TimeOfDay? endAfternoonTime;
 
   RangeSliderModel(
       {this.startMorningTime = const TimeOfDay(hour: 9, minute: 0),
@@ -17,10 +17,11 @@ class RangeSliderModelNotifier extends ChangeNotifier {
   RangeSliderModel _sliderModel;
 
   RangeSliderModelNotifier(
-      {TimeOfDay startMorningTime = const TimeOfDay(hour: 9, minute: 0),
-      TimeOfDay endMorningTime = const TimeOfDay(hour: 11, minute: 0),
-      TimeOfDay startAfternoonTime = const TimeOfDay(hour: 15, minute: 0),
-      TimeOfDay endAfternoonTime = const TimeOfDay(hour: 17, minute: 0)})
+      {TimeOfDay?
+          startMorningTime, //you need to change this accordingly to the database for exemple we add 1 to the startMorningTime in the database
+      TimeOfDay? endMorningTime,
+      TimeOfDay? startAfternoonTime,
+      TimeOfDay? endAfternoonTime})
       : _sliderModel = RangeSliderModel(
             startMorningTime: startMorningTime,
             endMorningTime: endMorningTime,

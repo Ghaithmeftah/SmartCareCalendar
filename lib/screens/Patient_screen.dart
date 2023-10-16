@@ -9,8 +9,10 @@ import '../colors.dart';
 import '../models/Calendar.dart';
 import '../widgets/bottom_navigation_bar_widget.dart';
 
+import 'package:syncfusion_flutter_sliders/sliders.dart';
+import 'package:syncfusion_flutter_core/theme.dart';
+
 import 'dart:async';
-//import 'package:booking_calendar/booking_calendar.dart';
 import '../Calendar_package/core/booking_calendar.dart';
 import '../db/MongoWithFastApi.dart';
 import '../mongodb.dart';
@@ -29,13 +31,6 @@ class _PatientScreenState extends State<PatientScreen> {
   late List<DateTime> fetchDoctorsbusyDates = [];
   late List<Map<String, dynamic>> fetchDoctorAppointmentsDates = [];
   late List<DateTime> fetchDoctorsBookedDates = [];
-
-  /*
-  TimeOfDay _startMorningTime = TimeOfDay(hour: 9, minute: 0);
-  TimeOfDay _endMorningTime = TimeOfDay(hour: 11, minute: 0);
-  TimeOfDay _startAfternoonTime = TimeOfDay(hour: 15, minute: 0);
-  TimeOfDay _endAfternoonTime = TimeOfDay(hour: 17, minute: 0);
-  */
 
   // Function to convert TimeOfDay to a formatted time string (e.g., 12:00 AM)
   String _timeToString(TimeOfDay time) {
@@ -61,11 +56,6 @@ class _PatientScreenState extends State<PatientScreen> {
   @override
   void initState() {
     super.initState();
-    //Future<Calendar> cal = MongoDatabase.getData();
-    // DateTime.now().startOfDay
-    // DateTime.now().endOfDay
-
-    // Fetch data initially when the screen loads
     fetchData();
     getBusyDates();
     getBookedDates();
@@ -82,7 +72,6 @@ class _PatientScreenState extends State<PatientScreen> {
 
   Future<void> fetchData() async {
     try {
-      //List<Map<String, dynamic>> newData = await MongoDatabase.getDocument();
       Map<String, dynamic> newData = await FastApi.fetchCalendar();
       setState(() {
         data = newData;
@@ -110,10 +99,11 @@ class _PatientScreenState extends State<PatientScreen> {
   Future<void> getAppointmentsDates() async {
     List<Map<String, dynamic>> listofappointmentsDates =
         await FastApi.getAllDoctorsAppointments();
-
-    setState(() {
-      fetchDoctorAppointmentsDates = listofappointmentsDates;
-    });
+    if (mounted) {
+      setState(() {
+        fetchDoctorAppointmentsDates = listofappointmentsDates;
+      });
+    }
   }
 
   List<DateTimeRange> converted = [];
@@ -207,10 +197,11 @@ class _PatientScreenState extends State<PatientScreen> {
     int maxNb = 0;
     maxNb = await FastApi.getNumberOfDailyAppointments();
     List<DateTime> listofbusyDates = await FastApi.getDoctorBusyDates(maxNb);
-
-    setState(() {
-      fetchDoctorsbusyDates = listofbusyDates;
-    });
+    if (mounted) {
+      setState(() {
+        fetchDoctorsbusyDates = listofbusyDates;
+      });
+    }
   }
 
   Future<void> getBookedDates() async {
@@ -218,16 +209,28 @@ class _PatientScreenState extends State<PatientScreen> {
     maxNb = await FastApi.getNumberOfDailyAppointments();
     List<DateTime> listofbookedDates =
         await FastApi.getDoctorBookedDates(maxNb);
-
-    setState(() {
-      fetchDoctorsBookedDates = listofbookedDates;
-    });
+    if (mounted) {
+      setState(() {
+        fetchDoctorsBookedDates = listofbookedDates;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final sliderModelNotifier = Provider.of<RangeSliderModelNotifier>(context);
+    // Set the initial slider values here
+    sliderModelNotifier.sliderModel.startMorningTime ??=
+        const TimeOfDay(hour: 9, minute: 0);
+    sliderModelNotifier.sliderModel.endMorningTime ??=
+        const TimeOfDay(hour: 11, minute: 0);
+    sliderModelNotifier.sliderModel.endAfternoonTime ??=
+        const TimeOfDay(hour: 17, minute: 0);
+    sliderModelNotifier.sliderModel.startAfternoonTime ??=
+        const TimeOfDay(hour: 15, minute: 0);
+
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       bottomNavigationBar: const BottomNavigationBarWidget(),
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -260,6 +263,9 @@ class _PatientScreenState extends State<PatientScreen> {
         ],
       ),
       body: Column(children: [
+        const SizedBox(
+          height: 8,
+        ),
         Stack(children: [
           Container(
             height: 100,
@@ -276,34 +282,65 @@ class _PatientScreenState extends State<PatientScreen> {
               children: [
                 const Padding(padding: EdgeInsets.symmetric(vertical: 8)),
                 Expanded(
-                  child: RangeSlider(
-                    inactiveColor: AppColors.softGrey,
-                    activeColor: AppColors.pink,
-                    min: _timeToDouble(const TimeOfDay(hour: 8, minute: 0)),
-                    max: _timeToDouble(const TimeOfDay(hour: 12, minute: 0)),
-                    divisions:
-                        8, // One division for every 30 minutes (8 divisions in total)
-                    labels: RangeLabels(
-                      _timeToString(
-                          sliderModelNotifier.sliderModel.startMorningTime),
-                      _timeToString(
-                          sliderModelNotifier.sliderModel.endMorningTime),
+                  child: SfRangeSliderTheme(
+                    data: SfRangeSliderThemeData(
+                      thumbRadius: 16,
+                      inactiveTrackHeight: 10,
+                      activeTrackHeight: 12,
+                      activeDividerColor: AppColors.black,
+                      inactiveDividerColor: AppColors.black,
+                      activeDividerRadius: 2,
+                      inactiveDividerRadius: 2,
                     ),
-                    values: RangeValues(
-                      _timeToDouble(
-                          sliderModelNotifier.sliderModel.startMorningTime),
-                      _timeToDouble(
-                          sliderModelNotifier.sliderModel.endMorningTime),
+                    child: SfRangeSlider(
+                      min: _timeToDouble(const TimeOfDay(hour: 8, minute: 0)),
+                      max: _timeToDouble(const TimeOfDay(hour: 12, minute: 0)),
+                      values: SfRangeValues(
+                        _timeToDouble(
+                            sliderModelNotifier.sliderModel.startMorningTime!),
+                        _timeToDouble(
+                            sliderModelNotifier.sliderModel.endMorningTime!),
+                      ),
+                      interval: 1,
+                      inactiveColor: AppColors.softGrey,
+                      activeColor: AppColors.pink,
+                      showTicks: true,
+                      //showLabels: true,
+                      showDividers: true,
+                      stepSize: 0.5,
+                      startThumbIcon: Center(
+                        child: Text(
+                          _timeToString(sliderModelNotifier
+                              .sliderModel.startMorningTime!),
+                          style: const TextStyle(
+                              color: AppColors.white, // Set the text color
+                              fontSize: 12.0,
+                              fontWeight: FontWeight
+                                  .w500 // Adjust the font size as needed
+                              ),
+                        ),
+                      ),
+                      endThumbIcon: Center(
+                        child: Text(
+                          _timeToString(
+                              sliderModelNotifier.sliderModel.endMorningTime!),
+                          style: const TextStyle(
+                              color: AppColors.white, // Set the text color
+                              fontSize: 12.0, // Adjust the font size as needed
+                              fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                      minorTicksPerInterval: 1,
+                      onChanged: (SfRangeValues values) {
+                        setState(() {
+                          sliderModelNotifier.sliderModel.startMorningTime =
+                              _doubleToTime(values.start);
+                          sliderModelNotifier.sliderModel.endMorningTime =
+                              _doubleToTime(values.end);
+                          sliderModelNotifier.notifyListeners();
+                        });
+                      },
                     ),
-                    onChanged: (values) {
-                      setState(() {
-                        sliderModelNotifier.sliderModel.startMorningTime =
-                            _doubleToTime(values.start);
-                        sliderModelNotifier.sliderModel.endMorningTime =
-                            _doubleToTime(values.end);
-                        sliderModelNotifier.notifyListeners();
-                      });
-                    },
                   ),
                 ),
                 Expanded(
@@ -311,14 +348,14 @@ class _PatientScreenState extends State<PatientScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: Text(
                             _timeToString(const TimeOfDay(hour: 8, minute: 0)),
                             style:
                                 const TextStyle(fontWeight: FontWeight.bold)),
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: Text(
                             _timeToString(const TimeOfDay(hour: 12, minute: 0)),
                             style:
@@ -327,36 +364,69 @@ class _PatientScreenState extends State<PatientScreen> {
                     ],
                   ),
                 ),
-                const Padding(padding: EdgeInsets.symmetric(vertical: 3)),
+                const SizedBox(
+                  height: 15,
+                ),
                 Expanded(
-                  child: RangeSlider(
-                    inactiveColor: AppColors.softGrey,
-                    activeColor: AppColors.pink,
-                    min: _timeToDouble(const TimeOfDay(hour: 14, minute: 0)),
-                    max: _timeToDouble(const TimeOfDay(hour: 17, minute: 0)),
-                    divisions:
-                        6, // One division for every 30 minutes (6 divisions in total)
-                    labels: RangeLabels(
-                      _timeToString(
-                          sliderModelNotifier.sliderModel.startAfternoonTime),
-                      _timeToString(
-                          sliderModelNotifier.sliderModel.endAfternoonTime),
+                  child: SfRangeSliderTheme(
+                    data: SfRangeSliderThemeData(
+                      thumbRadius: 16,
+                      inactiveTrackHeight: 10,
+                      activeTrackHeight: 12,
+                      activeDividerColor: AppColors.black,
+                      inactiveDividerColor: AppColors.black,
+                      activeDividerRadius: 2,
+                      inactiveDividerRadius: 2,
                     ),
-                    values: RangeValues(
-                      _timeToDouble(
-                          sliderModelNotifier.sliderModel.startAfternoonTime),
-                      _timeToDouble(
-                          sliderModelNotifier.sliderModel.endAfternoonTime),
+                    child: SfRangeSlider(
+                      min: _timeToDouble(const TimeOfDay(hour: 14, minute: 0)),
+                      max: _timeToDouble(const TimeOfDay(hour: 17, minute: 0)),
+                      values: SfRangeValues(
+                        _timeToDouble(sliderModelNotifier
+                            .sliderModel.startAfternoonTime!),
+                        _timeToDouble(
+                            sliderModelNotifier.sliderModel.endAfternoonTime!),
+                      ),
+                      interval: 1,
+                      inactiveColor: AppColors.softGrey,
+                      activeColor: AppColors.pink,
+                      showTicks: true,
+                      //showLabels: true,
+                      showDividers: true,
+                      stepSize: 0.5,
+                      startThumbIcon: Center(
+                        child: Text(
+                          _timeToString(sliderModelNotifier
+                              .sliderModel.startAfternoonTime!),
+                          style: const TextStyle(
+                              color: AppColors.white, // Set the text color
+                              fontSize: 12.0,
+                              fontWeight: FontWeight
+                                  .w500 // Adjust the font size as needed
+                              ),
+                        ),
+                      ),
+                      endThumbIcon: Center(
+                        child: Text(
+                          _timeToString(sliderModelNotifier
+                              .sliderModel.endAfternoonTime!),
+                          style: const TextStyle(
+                              color: AppColors.white, // Set the text color
+                              fontSize: 12.0, // Adjust the font size as needed
+                              fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                      minorTicksPerInterval: 1,
+                      onChanged: (SfRangeValues values) {
+                        setState(() {
+                          sliderModelNotifier.sliderModel.startAfternoonTime =
+                              _doubleToTime(values.start);
+                          sliderModelNotifier.sliderModel.endAfternoonTime =
+                              _doubleToTime(values.end);
+                          sliderModelNotifier.notifyListeners();
+                        });
+                      },
                     ),
-                    onChanged: (values) {
-                      setState(() {
-                        sliderModelNotifier.sliderModel.startAfternoonTime =
-                            _doubleToTime(values.start);
-                        sliderModelNotifier.sliderModel.endAfternoonTime =
-                            _doubleToTime(values.end);
-                        sliderModelNotifier.notifyListeners();
-                      });
-                    },
                   ),
                 ),
                 Expanded(
@@ -364,16 +434,22 @@ class _PatientScreenState extends State<PatientScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: Text(
-                          _timeToString(const TimeOfDay(hour: 14, minute: 0)),
+                          _timeToString(const TimeOfDay(
+                              hour: 14,
+                              minute:
+                                  0)), //you need to change this accordingly to the database
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: Text(
-                            _timeToString(const TimeOfDay(hour: 17, minute: 0)),
+                            _timeToString(const TimeOfDay(
+                                hour: 17,
+                                minute:
+                                    0)), //you need to change this accordingly to the database
                             style:
                                 const TextStyle(fontWeight: FontWeight.bold)),
                       ),
@@ -389,12 +465,15 @@ class _PatientScreenState extends State<PatientScreen> {
             top: 6,
             child: Container(
               color: Colors.white,
-              child: const Text(
-                'Préférences horaires',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.darkgrey,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4.0),
+                child: Text(
+                  'Préférences horaires :',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.darkgrey,
+                  ),
                 ),
               ),
             ),
@@ -412,13 +491,16 @@ class _PatientScreenState extends State<PatientScreen> {
                 return Text('Error: ${snapshot.error}');
               } else {
                 Calendar cal = Calendar(
-                  snapshot.data!['start_work_time'],
-                  snapshot.data!['end_work_time'],
-                  snapshot.data!['start_pause_time'],
-                  snapshot.data!['end_pause_time'],
-                  snapshot.data!['appointment_duration'],
-                  snapshot.data!['weekend_days'],
-                );
+                    snapshot.data!['start_work_time'],
+                    snapshot.data!['end_work_time'],
+                    snapshot.data!['start_pause_time'],
+                    snapshot.data!['end_pause_time'],
+                    snapshot.data!['appointment_duration'],
+                    snapshot.data!['weekend_days'],
+                    snapshot.data!['free_dates']);
+                //covert the List<dynamic> returned from the calendar to a List<DateTime>
+                List<DateTime> freeDates =
+                    cal.freeDates.map((item) => DateTime.parse(item)).toList();
                 mockBookingService = Booking_Service(
                     serviceName: 'Mock Service',
                     //La durée du consultaion !!!!! exemple (30 min) ( this line get it's value from MongoDb )
@@ -449,16 +531,11 @@ class _PatientScreenState extends State<PatientScreen> {
                     startingDayOfWeek: StartingDayOfWeek.monday,
                     wholeDayIsBookedWidget: const BookedWidget(
                         'Désolé, pour ce jour tout est réservé'),
-                    disabledDates: [
-                      DateTime(2023, 9, 7),
-                      DateTime(2023, 9, 12)
-                    ],
+                    disabledDates: freeDates,
                     busyDates: fetchDoctorsbusyDates,
-                    bookedDates:
-                        fetchDoctorsBookedDates, //!!!!!!!! create the api that gets the bookedDates from the backend!!!
+                    bookedDates: fetchDoctorsBookedDates,
                     bookingButtonText: "Confirmer",
                     bookingButtonColor: AppColors.green,
-
                     disabledDays: getWeekendDays(cal.weekend),
                     pauseSlotColor: AppColors.white,
                     bookedSlotColor: AppColors.greySoligth,

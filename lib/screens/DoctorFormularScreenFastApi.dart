@@ -1,15 +1,18 @@
+import 'package:awesome_calendar/awesome_calendar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:smartcare_calender/colors.dart';
 import '../db/MongoWithFastApi.dart';
 import '../widgets/bottom_navigation_bar_widget.dart';
-import '../widgets/date_picker.dart';
 import './Calendar_screen.dart';
 import 'package:day_picker/day_picker.dart';
 
 import 'package:datetime_picker_formfield_new/datetime_picker_formfield.dart';
 
 class DoctorFormularScreenFastAPI extends StatefulWidget {
-  const DoctorFormularScreenFastAPI({Key? key}) : super(key: key);
+  final List<DateTime>? oldFreeDates;
+  const DoctorFormularScreenFastAPI(this.oldFreeDates, {Key? key})
+      : super(key: key);
 
   @override
   State<DoctorFormularScreenFastAPI> createState() =>
@@ -19,6 +22,8 @@ class DoctorFormularScreenFastAPI extends StatefulWidget {
 class _DoctorFormularScreenFastAPIState
     extends State<DoctorFormularScreenFastAPI> {
   final format = DateFormat("HH:mm");
+  List<DateTime?> selectedDate = [];
+  List<DateTime>? oldFreeDates = [];
 
   //create a key for the Form widget
   final _formkey = GlobalKey<FormState>();
@@ -70,13 +75,13 @@ class _DoctorFormularScreenFastAPIState
       bottomNavigationBar: const BottomNavigationBarWidget(),
       appBar: AppBar(
         toolbarHeight: 40,
-        backgroundColor: const Color(0xffffffff),
+        backgroundColor: AppColors.white,
         leading: Row(mainAxisAlignment: MainAxisAlignment.start, children: [
           Expanded(
             child: IconButton(
                 icon: const Icon(
                   Icons.arrow_back_ios,
-                  color: Colors.pinkAccent,
+                  color: AppColors.pink,
                 ),
                 onPressed: () => Navigator.of(context).pop()),
           ),
@@ -92,7 +97,7 @@ class _DoctorFormularScreenFastAPIState
           child: Text(
             "mise à jour du calendrier",
             style: TextStyle(
-              color: Color(0xff1b1b1b),
+              color: AppColors.black,
             ),
           ),
         ),
@@ -104,7 +109,7 @@ class _DoctorFormularScreenFastAPIState
                 padding: EdgeInsets.only(right: 8.0),
                 child: Icon(
                   Icons.account_circle_sharp,
-                  color: Color(0xff686868),
+                  color: AppColors.darkgrey,
                   size: 30,
                 ),
               ),
@@ -130,7 +135,7 @@ class _DoctorFormularScreenFastAPIState
                     height: 70,
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(30),
-                        color: Colors.transparent),
+                        color: AppColors.white),
                     child: DateTimeField(
                       format: format,
                       maxLength: 5,
@@ -145,7 +150,7 @@ class _DoctorFormularScreenFastAPIState
                       controller: heure_debut_Controller,
                       decoration: const InputDecoration(
                           hintText: "Heure de début travail (8:00am)",
-                          hintStyle: TextStyle(color: Colors.blueGrey)),
+                          hintStyle: TextStyle(color: AppColors.darkgrey)),
                       autocorrect: true,
                     ),
                   ),
@@ -155,7 +160,7 @@ class _DoctorFormularScreenFastAPIState
                     height: 70,
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(30),
-                        color: Colors.transparent),
+                        color: AppColors.white),
                     child: Center(
                       child: DateTimeField(
                         format: format,
@@ -190,7 +195,7 @@ class _DoctorFormularScreenFastAPIState
                           width: 100,
                           decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(30),
-                              color: Colors.transparent),
+                              color: AppColors.white),
                           child: Center(
                             child: DateTimeField(
                               format: format,
@@ -206,7 +211,8 @@ class _DoctorFormularScreenFastAPIState
                               controller: debut_pause_controller,
                               decoration: const InputDecoration(
                                   hintText: "De 12:00",
-                                  hintStyle: TextStyle(color: Colors.blueGrey)),
+                                  hintStyle:
+                                      TextStyle(color: AppColors.darkgrey)),
                               autocorrect: true,
                             ),
                           ),
@@ -218,7 +224,7 @@ class _DoctorFormularScreenFastAPIState
                           width: 100,
                           decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(30),
-                              color: Colors.transparent),
+                              color: AppColors.white),
                           child: Center(
                             child: DateTimeField(
                               format: format,
@@ -234,7 +240,8 @@ class _DoctorFormularScreenFastAPIState
                               controller: fin_pause_controller,
                               decoration: const InputDecoration(
                                   hintText: "vers 13:00",
-                                  hintStyle: TextStyle(color: Colors.blueGrey)),
+                                  hintStyle:
+                                      TextStyle(color: AppColors.darkgrey)),
                               autocorrect: true,
                             ),
                           ),
@@ -257,7 +264,7 @@ class _DoctorFormularScreenFastAPIState
                         maxLength: 2,
                         decoration: const InputDecoration(
                             hintText: "Durée d'une Consultation (en min)",
-                            hintStyle: TextStyle(color: Colors.blueGrey)),
+                            hintStyle: TextStyle(color: AppColors.darkgrey)),
                         autocorrect: true,
                         autofillHints: const ["30min"],
                       ),
@@ -281,7 +288,7 @@ class _DoctorFormularScreenFastAPIState
                           borderRadius: BorderRadius.circular(30.0),
                           gradient: const LinearGradient(
                             begin: Alignment.topLeft,
-                            colors: [Color(0xFF4d6466), Color(0xFFadf3d1)],
+                            colors: [AppColors.softGrey, AppColors.darkgrey],
                             tileMode: TileMode
                                 .repeated, // repeats the gradient over the canvas
                           ),
@@ -300,74 +307,81 @@ class _DoctorFormularScreenFastAPIState
                     ),
                   ),
                   const Text("Les jours du congé :"),
-                  FloatingActionButton(
-                    backgroundColor: const Color(0xFF789e9e),
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) => AlertDialog(
-                          scrollable: true,
-                          title: const Text("Congé :"),
-                          content: DatePicker(),
-                          actions: [
-                            TextButton(
-                              child: const Text("ok"),
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                          ],
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      FloatingActionButton(
+                        backgroundColor: AppColors.lightgrey,
+                        onPressed: () async {
+                          List<DateTime?>? selectedDates =
+                              await showDialog<List<DateTime>>(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AwesomeCalendarDialog(
+                                selectionMode: SelectionMode.multi,
+                                canToggleRangeSelection: true,
+                                selectedDates:
+                                    oldFreeDates, // return the list of old free dates from the database
+                              );
+                            },
+                          );
+
+                          if (selectedDates != null) {
+                            setState(() {
+                              selectedDate = selectedDates;
+                            });
+                          }
+                        },
+                        tooltip: 'Choose date Range',
+                        child: const Icon(
+                          Icons.calendar_today_outlined,
+                          color: AppColors.black,
                         ),
-                      );
-
-                      /*showCustomDateRangePicker(
-                        context,
-                        dismissible: true,
-                        minimumDate:
-                            DateTime.now().subtract(const Duration(days: 30)),
-                        maximumDate:
-                            DateTime.now().add(const Duration(days: 30)),
-                        endDate: endDate,
-                        startDate: startDate,
-
-                        backgroundColor: Colors.white,
-                        primaryColor: Colors.green,
-                        onApplyClick: (start, end) {
-                          setState(() {
-                            endDate = end;
-                            startDate = start;
-                            print("startDate= $startDate , endDate= $endDate");
-                          });
-                        },
-                        onCancelClick: () {
-                          setState(() {
-                            endDate = null;
-                            startDate = null;
-                          });
-                        },
-                      );*/
-                    },
-                    tooltip: 'choose date Range',
-                    child: const Icon(Icons.calendar_today_outlined,
-                        color: Color(0xFF1b1b1b)),
+                      ),
+                      const SizedBox(
+                        height: 5,
+                      ),
+                      if (selectedDate.isNotEmpty)
+                        Column(
+                          children: selectedDate.map((date) {
+                            return Text(
+                              DateFormat('MMM dd, yyyy').format(date!),
+                              style: const TextStyle(
+                                fontSize: 16,
+                              ),
+                            );
+                          }).toList(),
+                        )
+                      else
+                        const Text("pas de date sélectionnée"),
+                    ],
                   ),
                 ],
               ),
             )),
             const SizedBox(
-              height: 5,
+              height: 20,
             ),
             Container(
               height: 70,
               width: 200,
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30),
-                  color: const Color(0xFFadf3d1)),
+                  color: AppColors.green),
               child: MaterialButton(
                   child: const Text("Sauvegarder"),
                   onPressed: () {
                     if (_formkey.currentState != null &&
                         _formkey.currentState!.validate()) {
+                      //prepare the selectedDate to be a list of Strings in order to pass it
+                      List<String> freedates = selectedDate.map((dateTime) {
+                        // Format the DateTime as a string in the desired format.
+                        return DateFormat('yyyy-MM-dd').format(dateTime!);
+                      }).toList();
                       //insert the calendar data in mongodb
                       FastApi.createOrUpdateCalendar(
                         heure_debut_Controller.text,
@@ -376,6 +390,7 @@ class _DoctorFormularScreenFastAPIState
                         fin_pause_controller.text,
                         duree_consultation_controller.text,
                         Weekend,
+                        freedates,
                       );
                       Navigator.push(
                         context,

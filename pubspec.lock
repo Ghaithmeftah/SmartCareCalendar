@@ -9,6 +9,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.11.0"
+  awesome_calendar:
+    dependency: "direct main"
+    description:
+      name: awesome_calendar
+      sha256: "170066d0c15f2596625fa143700bcfe1ab2301fab32fbcdb33d356f97911af07"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.3"
   basic_utils:
     dependency: transitive
     description:
@@ -105,14 +113,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.5"
-  custom_date_range_picker:
-    dependency: "direct main"
-    description:
-      name: custom_date_range_picker
-      sha256: "69b803e285e27cdf018ed4a81edb53c9db3542e8853a9c086421260f943d7b16"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.6"
   datetime_picker_formfield_new:
     dependency: "direct main"
     description:
@@ -409,7 +409,7 @@ packages:
     source: hosted
     version: "1.2.0"
   syncfusion_flutter_core:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: syncfusion_flutter_core
       sha256: "8db8f55c77f56968681447d3837c10f27a9e861e238a898fda116c7531def979"
@@ -424,6 +424,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "21.2.3"
+  syncfusion_flutter_sliders:
+    dependency: "direct main"
+    description:
+      name: syncfusion_flutter_sliders
+      sha256: e7e3feaa16ab5821b0062b7addcb98f7d4bd734cff37909c5169e494fb717d91
+      url: "https://pub.dev"
+    source: hosted
+    version: "21.2.4"
   table_calendar:
     dependency: "direct main"
     description:

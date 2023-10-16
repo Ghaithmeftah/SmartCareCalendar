@@ -5,6 +5,7 @@ class Calendar {
   final String finPause;
   String duration;
   final String weekend;
+  final List<dynamic> freeDates;
   Calendar(
     this.startTime,
     this.endTime,
@@ -12,5 +13,6 @@ class Calendar {
     this.finPause,
     this.duration,
     this.weekend,
+    this.freeDates,
   );
 }

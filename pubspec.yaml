@@ -41,7 +41,6 @@ dependencies:
   intl: ^0.17.0
   datetime_picker_formfield_new: ^2.1.0
   day_picker: ^2.2.0
-  custom_date_range_picker: ^1.0.6
   calendar_date_picker2: ^0.5.2
   syncfusion_flutter_datepicker: ^21.2.3
   http: ^1.1.0
@@ -49,6 +48,9 @@ dependencies:
   provider: ^6.0.5
   simple_gesture_detector: ^0.2.0
   font_awesome_flutter: ^10.5.0
+  awesome_calendar: ^1.1.3
+  syncfusion_flutter_sliders: ^21.2.4
+  syncfusion_flutter_core: ^21.2.10
 
 dev_dependencies:
   flutter_test:

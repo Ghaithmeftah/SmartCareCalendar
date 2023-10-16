@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
 class DatePicker extends StatefulWidget {
+  const DatePicker({super.key});
+
   @override
   State<DatePicker> createState() => _DatePickerState();
 }
