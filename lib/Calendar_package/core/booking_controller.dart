@@ -126,13 +126,13 @@ class BookingController extends ChangeNotifier {
   bool isWholeDayBooked() {
     bool isBooked = true;
     for (var i = 0; i < allMorningSlots.length; i++) {
-      if (!isMorningSlotBooked(i)) {
+      if (!isMorningSlotBooked(i, _allMorningSlots)) {
         isBooked = false;
         break;
       }
     }
     for (var i = 0; i < allEveningSlots.length; i++) {
-      if (!isEveningSlotBooked(i)) {
+      if (!isEveningSlotBooked(i, _allEveningSlots)) {
         isBooked = false;
         break;
       }
@@ -153,8 +153,8 @@ class BookingController extends ChangeNotifier {
     return ((openingHours * 60) / bookingService.serviceDuration).floor();
   }
 
-  bool isMorningSlotBooked(int index) {
-    DateTime checkSlot = allMorningSlots.elementAt(index);
+  bool isMorningSlotBooked(int index, List<DateTime> morningSlots) {
+    DateTime checkSlot = morningSlots.elementAt(index);
     bool result = false;
     for (var slot in bookedSlots) {
       if (BookingUtil.isOverLapping(slot.start, slot.end, checkSlot,
@@ -166,8 +166,8 @@ class BookingController extends ChangeNotifier {
     return result;
   }
 
-  bool isEveningSlotBooked(int index) {
-    DateTime checkSlot = allEveningSlots.elementAt(index);
+  bool isEveningSlotBooked(int index, List<DateTime> eveningSlots) {
+    DateTime checkSlot = eveningSlots.elementAt(index);
     bool result = false;
     for (var slot in bookedSlots) {
       if (BookingUtil.isOverLapping(slot.start, slot.end, checkSlot,

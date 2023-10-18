@@ -472,10 +472,21 @@ class _BookingCalendarMainState extends State<BookingCalendarMain>
                                                           .endMorningTime!)
                                                   .length,
                                               itemBuilder: (context, index) {
+                                                List<DateTime> morningSlots =
+                                                    controller
+                                                        .filterMorningPauseSlots(
+                                                            sliderModelNotifier
+                                                                .sliderModel
+                                                                .startMorningTime!,
+                                                            sliderModelNotifier
+                                                                .sliderModel
+                                                                .endMorningTime!);
+
                                                 TextStyle? getTextStyle() {
                                                   if (controller
                                                       .isMorningSlotBooked(
-                                                          index)) {
+                                                          index,
+                                                          morningSlots)) {
                                                     return widget
                                                         .bookedSlotTextStyle;
                                                   } else if (index ==
@@ -489,18 +500,8 @@ class _BookingCalendarMainState extends State<BookingCalendarMain>
                                                   }
                                                 }
 
-                                                List<DateTime> MorningSlots =
-                                                    controller
-                                                        .filterMorningPauseSlots(
-                                                            sliderModelNotifier
-                                                                .sliderModel
-                                                                .startMorningTime!,
-                                                            sliderModelNotifier
-                                                                .sliderModel
-                                                                .endMorningTime!);
-                                                final Morningslot =
-                                                    MorningSlots.elementAt(
-                                                        index);
+                                                final morningslot = morningSlots
+                                                    .elementAt(index);
                                                 return BookingSlot(
                                                   hideBreakSlot:
                                                       widget.hideBreakTime,
@@ -514,24 +515,24 @@ class _BookingCalendarMainState extends State<BookingCalendarMain>
                                                       widget.selectedSlotColor,
                                                   isPauseTime: controller
                                                       .isSlotInPauseTime(
-                                                          Morningslot),
+                                                          morningslot),
                                                   isBooked: controller
                                                       .isMorningSlotBooked(
-                                                          index),
+                                                          index, morningSlots),
                                                   isSelected: index ==
                                                       controller
                                                           .selectedMorningSlot,
                                                   onTap: () => controller
                                                       .selectMorningSlot(
-                                                          index, Morningslot),
+                                                          index, morningslot),
                                                   child: Center(
                                                     child: Text(
                                                       widget.formatDateTime
                                                               ?.call(
-                                                                  Morningslot) ??
+                                                                  morningslot) ??
                                                           BookingUtil
                                                               .formatDateTime(
-                                                                  Morningslot),
+                                                                  morningslot),
                                                       style: getTextStyle(),
                                                     ),
                                                   ),
@@ -569,10 +570,19 @@ class _BookingCalendarMainState extends State<BookingCalendarMain>
                                                           .endAfternoonTime!)
                                                   .length,
                                               itemBuilder: (context, index) {
+                                                List<DateTime> eveningSlots =
+                                                    controller.filtereveningPauseSlots(
+                                                        sliderModelNotifier
+                                                            .sliderModel
+                                                            .startAfternoonTime!,
+                                                        sliderModelNotifier
+                                                            .sliderModel
+                                                            .endAfternoonTime!);
                                                 TextStyle? getTextStyle() {
                                                   if (controller
                                                       .isEveningSlotBooked(
-                                                          index)) {
+                                                          index,
+                                                          eveningSlots)) {
                                                     return widget
                                                         .bookedSlotTextStyle;
                                                   } else if (index ==
@@ -586,14 +596,7 @@ class _BookingCalendarMainState extends State<BookingCalendarMain>
                                                   }
                                                 }
 
-                                                final eveningSlot = controller
-                                                    .filtereveningPauseSlots(
-                                                        sliderModelNotifier
-                                                            .sliderModel
-                                                            .startAfternoonTime!,
-                                                        sliderModelNotifier
-                                                            .sliderModel
-                                                            .endAfternoonTime!)
+                                                final eveningSlot = eveningSlots
                                                     .elementAt(index);
 
                                                 return BookingSlot(
@@ -612,7 +615,7 @@ class _BookingCalendarMainState extends State<BookingCalendarMain>
                                                           eveningSlot),
                                                   isBooked: controller
                                                       .isEveningSlotBooked(
-                                                          index),
+                                                          index, eveningSlots),
                                                   isSelected: index ==
                                                       controller
                                                           .selectedEveningSlot,

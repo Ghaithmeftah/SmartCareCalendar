@@ -32,7 +32,7 @@ class FastApi {
   static Future<List<Map<String, dynamic>>> getAllDoctorsAppointments() async {
     //don't forget to change the doctor_id IN THE URL !!!!!!!!!
     final response = await http.get(Uri.parse(
-        "$endpoint/doctor/get_all_doctors_appointments?doctor_id=6243287fba6458d2b04ddf44"));
+        "$endpoint/doctor/get_doctor_appointments?doctor_id=6243287fba6458d2b04ddf44"));
     if (response.statusCode == 200) {
       // Handle the successful response
       final decodedData = json.decode(response.body);
