@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 //don't forget to change your ip address (ipconfig)!!!!!!!!!!!!!!!!!!!!!
-const endpoint = 'http://192.168.237.1:8080/api';
+const endpoint = 'http://192.168.17.1:8080/api';
 
 class FastApi {
   static Future<List<Map<String, dynamic>>> getDoctorAppointments(
@@ -13,7 +13,7 @@ class FastApi {
     final date = formattedDate.substring(0, 11).trim();
     //don't forget to change the doctor_id IN THE URL !!!!!!!!!
     final response = await http.get(Uri.parse(
-        "$endpoint/doctor/get_doctor_appointments?doctor_id=6243287fba6458d2b04ddf44&date=$date"));
+        "$endpoint/doctor/get_doctor_appointments?doctor_id=6532a2698b4180a0cb73cf24&date=$date"));
     if (response.statusCode == 200) {
       // Handle the successful response
       final decodedData = json.decode(response.body);
@@ -29,10 +29,11 @@ class FastApi {
     }
   }
 
-  static Future<List<Map<String, dynamic>>> getAllDoctorsAppointments() async {
+  /*static Future<List<Map<String, dynamic>>> getAllDoctorsAppointments(
+      {String? date}) async {
     //don't forget to change the doctor_id IN THE URL !!!!!!!!!
     final response = await http.get(Uri.parse(
-        "$endpoint/doctor/get_doctor_appointments?doctor_id=6243287fba6458d2b04ddf44"));
+        "$endpoint/doctor/get_doctor_appointments?doctor_id=6532a2698b4180a0cb73cf24&date=$date"));
     if (response.statusCode == 200) {
       // Handle the successful response
       final decodedData = json.decode(response.body);
@@ -45,13 +46,36 @@ class FastApi {
     } else {
       print('Request failed with status: ${response.statusCode}');
       return [];
+    }
+  }*/
+  static Future<List<Map<String, dynamic>>> getAllDoctorsAppointments(
+      {String? date}) async {
+    final doctorId = "6532a2698b4180a0cb73cf24";
+    final baseUrl =
+        "$endpoint/doctor/get_doctor_appointments?doctor_id=$doctorId";
+
+    // Conditionally add the date query parameter if date is not null
+    final url = (date != null) ? "$baseUrl&date=$date" : baseUrl;
+
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      // Handle the successful response
+      final decodedData = json.decode(response.body);
+      final List<Map<String, dynamic>> appointments =
+          List<Map<String, dynamic>>.from(decodedData);
+      print(appointments);
+      return appointments;
+    } else {
+      print('Request failed with status: ${response.statusCode}');
+      return []; // You can return null or an empty list based on your error handling strategy
     }
   }
 
   static Future<List<DateTime>> getDoctorBusyDates(int maxNb) async {
     //don't forget to change the doctor_id IN THE URL !!!!!!!!!
     final response = await http.get(Uri.parse(
-        "$endpoint/doctor/get_doctor_busy_dates?doctor_id=6243287fba6458d2b04ddf44&max_nb=$maxNb"));
+        "$endpoint/doctor/get_doctor_busy_dates?doctor_id=6532a2698b4180a0cb73cf24&max_nb=$maxNb"));
     if (response.statusCode == 200) {
       // Handle the successful response
       final decodedData = json.decode(response.body) as List<dynamic>;
@@ -68,7 +92,7 @@ class FastApi {
   static Future<List<DateTime>> getDoctorBookedDates(int maxNb) async {
     //don't forget to change the doctor_id IN THE URL !!!!!!!!!
     final response = await http.get(Uri.parse(
-        "$endpoint/doctor/get_doctor_booked_dates?doctor_id=6243287fba6458d2b04ddf44&max_nb=$maxNb"));
+        "$endpoint/doctor/get_doctor_booked_dates?doctor_id=6532a2698b4180a0cb73cf24&max_nb=$maxNb"));
     if (response.statusCode == 200) {
       // Handle the successful response
       final decodedData = json.decode(response.body) as List<dynamic>;
@@ -84,7 +108,7 @@ class FastApi {
 
   static Future<int> getNumberOfDailyAppointments() async {
     final response = await http.get(Uri.parse(
-        "$endpoint/doctor/get_doctor_max_numer_of_appointments_per_day?doctor_id=6243287fba6458d2b04ddf44"));
+        "$endpoint/doctor/get_doctor_max_number_of_appointments_per_day?doctor_id=6532a2698b4180a0cb73cf24"));
     if (response.statusCode == 200) {
       // Handle the successful response
       final decodedData = json.decode(response.body) as int;
@@ -106,7 +130,7 @@ class FastApi {
     //don't forget to change the doctor_id IN THE URL !!!!!!!!!
     final response = await http.post(
       Uri.parse(
-          "$endpoint/appointment/take_appointment?date=$date&time=$time&doctor_id=6243287fba6458d2b04ddf44&motiv=$motiv&patient_name=$patientName"),
+          "$endpoint/appointment/take_appointment?date=$date&time=$time&doctor_id=6532a2698b4180a0cb73cf24&motiv=$motiv&patient_name=$patientName"),
       headers: {'Content-Type': 'application/json'},
     );
     return response;
@@ -117,7 +141,7 @@ class FastApi {
         //don't forget to change your ip address (ipconfig) in the endpoint !!!!!!!!!!!!!!!!!!!!!
         //dont forget to change the id of the doctor in a dynamic way
         .get(Uri.parse(
-            '$endpoint/doctor/get_doctor_calendar_by_id?doctor_id=6243287fba6458d2b04ddf44'));
+            '$endpoint/doctor/get_doctor_calendar_by_id?doctor_id=6532a2698b4180a0cb73cf24'));
     if (response.statusCode == 200) {
       // Handle the successful response
       final decodedData = json.decode(response.body);
@@ -144,7 +168,7 @@ class FastApi {
     // First, try to fetch the doctor's calendar using his ID.
     final existingCalendarResponse = await http.get(
       Uri.parse(
-          "$endpoint/doctor/get_doctor_calendar_by_id?doctor_id=6243287fba6458d2b04ddf44"),
+          "$endpoint/doctor/get_doctor_calendar_by_id?doctor_id=6532a2698b4180a0cb73cf24"),
     );
 
     if (existingCalendarResponse.statusCode == 200) {
@@ -160,7 +184,7 @@ class FastApi {
       // The calendar already exists, so we need to update it.
       final response = await http.post(
         Uri.parse(
-            '$endpoint/doctor/create_or_update_doctor_calendar?owner_id=6243287fba6458d2b04ddf44'),
+            '$endpoint/doctor/create_or_update_doctor_calendar?owner_id=6532a2698b4180a0cb73cf24'),
         body: json.encode({
           "start_work_time": start_work_time,
           "end_work_time": end_work_time,
@@ -177,6 +201,20 @@ class FastApi {
       // Raise an exception indicating the issue with the request
       throw Exception(
           'Failed to fetch existing calendar: ${existingCalendarResponse.statusCode}');
+    }
+  }
+
+  static Map<String, int> getHourAndMinutesFromMongo(String ch) {
+    if (ch.length == 5) {
+      String h = ch[0] + ch[1];
+      String min = ch[3] + ch[4];
+      return {"hour": int.parse(h), "minites": int.parse(min)};
+    } else if (ch.length == 4) {
+      String h = ch[0];
+      String min = ch[2] + ch[3];
+      return {"hour": int.parse(h), "minites": int.parse(min)};
+    } else {
+      return {};
     }
   }
 }

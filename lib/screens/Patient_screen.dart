@@ -15,7 +15,6 @@ import 'package:syncfusion_flutter_core/theme.dart';
 import 'dart:async';
 import '../Calendar_package/core/booking_calendar.dart';
 import '../db/MongoWithFastApi.dart';
-import '../mongodb.dart';
 
 class PatientScreen extends StatefulWidget {
   const PatientScreen({super.key});
@@ -191,10 +190,9 @@ class _PatientScreenState extends State<PatientScreen> {
     ];
   }
 
-  int getHour(String ch) =>
-      MongoDatabase.getHourAndMinutesFromMongo(ch).values.first;
+  int getHour(String ch) => FastApi.getHourAndMinutesFromMongo(ch).values.first;
   int getMinutes(String ch) =>
-      MongoDatabase.getHourAndMinutesFromMongo(ch).values.last;
+      FastApi.getHourAndMinutesFromMongo(ch).values.last;
   List<int> getWeekendDays(String weekend) {
     List<int> l = [];
     if (weekend.contains('lundi')) {
@@ -272,7 +270,7 @@ class _PatientScreenState extends State<PatientScreen> {
 
     if (calendar == null) {
       // You can return a loading indicator or any other widget to indicate that the data is being fetched.
-      return const Scaffold(body: CircularProgressIndicator());
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     } else {
       // Set the initial slider values here
       sliderModelNotifier.sliderModel.startMorningTime ??= TimeOfDay(
