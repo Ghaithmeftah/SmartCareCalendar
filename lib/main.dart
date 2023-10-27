@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:smartcare_calender/models/RangeSliderModel.dart';
 import '../screens/Calendar_screen.dart';
-import './mongodb.dart';
+
 import 'screens/Patient_screen.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await MongoDatabase.connect();
+
   initializeDateFormatting().then((_) => runApp(ChangeNotifierProvider(
       create: (_) => RangeSliderModelNotifier(),
       child: const BookingCalendarDemoApp())));

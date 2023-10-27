@@ -288,7 +288,6 @@ class _BookingCalendarMainState extends State<BookingCalendarMain>
                       calendarFormat: _calendarFormat,
                       calendarStyle: const CalendarStyle(
                         isTodayHighlighted: true,
-                        weekNumberTextStyle: TextStyle(color: AppColors.black),
                         defaultTextStyle: TextStyle(color: AppColors.black),
                         weekendTextStyle: TextStyle(color: AppColors.black),
                         disabledTextStyle: TextStyle(color: Color(0xFFBFBFBF)),

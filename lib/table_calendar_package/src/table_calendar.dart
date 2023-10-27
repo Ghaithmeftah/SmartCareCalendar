@@ -748,13 +748,13 @@ class _TableCalendarState<T> extends State<TableCalendar<T>> {
   }
 
   Future<Color> getCalendarDayColor(DateTime day) async {
-    //this is going to enter on a loop and blocks our app because it tests every day of the calendar if it's busy or not try to change the logic into getting the busy days into a list and just pass the list of busy days like the logic of the holidays !!!!!
     if (day != widget.lastDay) {
       List<Map<String, dynamic>> appointments =
           await FastApi.getDoctorAppointments(day);
-      if (appointments.length >= 2) {
+      int maxnb = await FastApi.getNumberOfDailyAppointments();
+      if (appointments.length >= 3 / 4 * maxnb) {
         return AppColors.orangeaccent;
-      } else if (appointments.length >= 14) {
+      } else if (appointments.length >= maxnb) {
         return AppColors.pink;
       }
       return AppColors.black;
@@ -763,8 +763,6 @@ class _TableCalendarState<T> extends State<TableCalendar<T>> {
   }
 
   Future<void> fetchCalendarDayColor(DateTime day) async {
-    //!!!!!!one issue that I don't know how to pass the dates of the calendar because I'm testing on a particular date her 2023-19-02
-    //Color color = await getCalendarDayColor(DateTime(2023, 9, 2)); this is static
     Color color = await getCalendarDayColor(day);
     if (mounted) {
       setState(() {
