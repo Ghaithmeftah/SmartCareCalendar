@@ -134,8 +134,8 @@ class _DoctorFormularScreenFastAPIState
                         const EdgeInsets.symmetric(horizontal: 40, vertical: 7),
                     height: 70,
                     decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        color: AppColors.white),
+                        borderRadius: BorderRadius.circular(15),
+                        color: Colors.transparent),
                     child: DateTimeField(
                       format: format,
                       maxLength: 5,
@@ -160,7 +160,7 @@ class _DoctorFormularScreenFastAPIState
                     height: 70,
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(30),
-                        color: AppColors.white),
+                        color: Colors.transparent),
                     child: Center(
                       child: DateTimeField(
                         format: format,
@@ -195,7 +195,7 @@ class _DoctorFormularScreenFastAPIState
                           width: 100,
                           decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(30),
-                              color: AppColors.white),
+                              color: Colors.transparent),
                           child: Center(
                             child: DateTimeField(
                               format: format,
@@ -224,7 +224,7 @@ class _DoctorFormularScreenFastAPIState
                           width: 100,
                           decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(30),
-                              color: AppColors.white),
+                              color: Colors.transparent),
                           child: Center(
                             child: DateTimeField(
                               format: format,

@@ -9,9 +9,11 @@ import 'package:provider/provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  initializeDateFormatting().then((_) => runApp(ChangeNotifierProvider(
-      create: (_) => RangeSliderModelNotifier(),
-      child: const BookingCalendarDemoApp())));
+  initializeDateFormatting().then((_) => runApp(
+        ChangeNotifierProvider(
+            create: (_) => RangeSliderModelNotifier(),
+            child: const BookingCalendarDemoApp()),
+      ));
 }
 
 class BookingCalendarDemoApp extends StatelessWidget {

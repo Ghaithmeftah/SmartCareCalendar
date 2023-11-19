@@ -112,7 +112,7 @@ class _BookingCalendarMainState extends State<BookingCalendarMain>
   late BookingController controller;
   final now = DateTime.now();
   late AnimationController _animationController;
-  final textFieldController = TextEditingController();
+  final textFieldMotifController = TextEditingController();
 
   @override
   void initState() {
@@ -193,7 +193,7 @@ class _BookingCalendarMainState extends State<BookingCalendarMain>
               title: const Text('Motif de consultation du patient :'),
               content: TextField(
                 autofocus: true,
-                controller: textFieldController,
+                controller: textFieldMotifController,
                 decoration:
                     const InputDecoration(hintText: 'Décrivez votre état ...'),
               ),
@@ -206,12 +206,15 @@ class _BookingCalendarMainState extends State<BookingCalendarMain>
                           newBooking: controller
                               .generateNewBookingForUploading(controller.slot));
                       FastApi.takeAppointment(
-                          controller.slot, textFieldController.text);
+                          controller.slot,
+                          "647e8660ae87a55a026142b7",
+                          "65491b0ea69b1e4f790fbca5",
+                          textFieldMotifController.text);
                       controller.toggleUploading();
                       controller.resetSelectedSlot();
 
                       Navigator.of(context).pop();
-                      textFieldController.clear();
+                      textFieldMotifController.clear();
                     },
                     child: const Text(
                       'Confirmer',

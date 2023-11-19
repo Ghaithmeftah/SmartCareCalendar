@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:smartcare_calender/Calendar_package/components/Accepted_waiting_doctor_appointments.dart';
 import 'package:smartcare_calender/colors.dart';
 import '../../db/MongoWithFastApi.dart';
 import '../../table_calendar_package/table_calendar.dart';
@@ -115,11 +116,12 @@ class _BookingDoctorCalendarMainState extends State<BookingDoctorCalendarMain>
   TextEditingController patientMotifController = TextEditingController();
   TextEditingController newPatientMotifController = TextEditingController();
   TextEditingController patientNameController = TextEditingController();
-  TextEditingController newPatientNameController = TextEditingController();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  TextEditingController newPatientFirstNameController = TextEditingController();
+  TextEditingController newPatientSecondNameController =
+      TextEditingController();
 
   late BookingController controller;
-  final PageController MyPageController = PageController();
+  final PageController myPageController = PageController();
 
   final now = DateTime.now();
   late AnimationController _animationController;
@@ -197,271 +199,327 @@ class _BookingDoctorCalendarMainState extends State<BookingDoctorCalendarMain>
     return day;
   }
 
+  void updateBookingState() {
+    setState(() {
+      ///reload page !!!
+    });
+  }
+
   ValueNotifier<bool> isListViewVisibleNotifier = ValueNotifier<bool>(false);
   GlobalKey<ScaffoldState> scaffoldKey = GlobalKey();
   bool isListViewVisible = false;
 
-  Future openDialog() => showDialog(
-        context: context,
-        builder: (context) => StatefulBuilder(
-          builder: (context, setState) {
-            List<String> patientNames =
-                List.generate(5, (index) => 'Patient $index');
-            List<String> filteredPatientNames = List.from(patientNames);
+  Future<void> openDialog(BuildContext context) async {
+    Map<String, dynamic> patientNames = await FastApi.getDoctorsPatientsNames();
 
-            void filterPatientList(String query) {
-              filteredPatientNames.clear();
-              if (query.isNotEmpty) {
-                for (String patientName in patientNames) {
-                  if (patientName.toLowerCase().contains(query.toLowerCase())) {
-                    filteredPatientNames.add(patientName);
-                  }
+    //sort the map by the boolean values Local patient on top and shared on bottom!!
+    // Convert the map to a list of entries (key-value pairs)
+    List<MapEntry<String, dynamic>> patientList = patientNames.entries.toList();
+    // Custom comparator function to sort by the boolean values in descending order
+    patientList.sort((a, b) {
+      // Sort in descending order so that true values come first
+      return (b.value['is_local'] ? 1 : 0) - (a.value['is_local'] ? 1 : 0);
+    });
+    // Convert the sorted list back to a map
+    patientNames = Map.fromEntries(patientList);
+    List<String> patientIds = List.from(patientNames.keys.map((e) => e));
+
+    List<String> filteredPatientNames =
+        List.from(patientNames.values.map((e) => e['fullname'] as String));
+    List<bool> filteredPatientIsLocalList =
+        List.from(patientNames.values.map((e) => e['is_local'] as bool));
+
+    bool isNewPatientSelected = false;
+    final _formKey = GlobalKey<FormState>();
+    // Capture the context before entering the async block
+    BuildContext currentContext = context;
+
+    // ignore: use_build_context_synchronously
+    return showDialog(
+      context: currentContext,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          void filterPatientList(String query) {
+            filteredPatientNames.clear();
+            if (query.isNotEmpty) {
+              for (String patientName in patientNames.keys) {
+                if (patientName.toLowerCase().contains(query.toLowerCase())) {
+                  filteredPatientNames.add(patientName);
                 }
-              } else {
-                filteredPatientNames.addAll(patientNames);
               }
-              setState(() {});
+            } else {
+              filteredPatientNames.addAll(patientNames.keys);
             }
+            setState(() {});
+          }
 
-            void hideListView() {
-              setState(() {
-                isListViewVisible = false;
-              });
-              isListViewVisibleNotifier.value = false;
-            }
+          void hideListView() {
+            setState(() {
+              isListViewVisible = false;
+            });
+          }
 
-            void showListView() {
-              setState(() {
-                isListViewVisible = true;
-              });
-              isListViewVisibleNotifier.value = true;
-            }
+          void showListView() {
+            setState(() {
+              isListViewVisible = true;
+            });
+          }
 
-            return ValueListenableBuilder<bool>(
-                valueListenable: isListViewVisibleNotifier,
-                builder: (context, isListViewVisible, child) {
-                  return AlertDialog(
-                    title: const Text(
-                      'Sélectionner ou ajouter un Patient :',
-                      style: TextStyle(color: AppColors.black),
-                    ),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
+          return FutureBuilder(
+            future: Future
+                .value(), // You can replace this with the actual future you are waiting for.
+            builder: (context, snapshot) {
+              return AlertDialog(
+                title: const Text(
+                  'Sélectionner ou ajouter un Patient :',
+                  style: TextStyle(color: AppColors.black),
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Nouveau patient ?',
-                              style: TextStyle(color: AppColors.darkgrey),
-                            ),
-                            Switch(
-                              activeColor: AppColors.pink,
-                              value: isNewPatientSelected,
-                              onChanged: (value) {
-                                setState(() {
-                                  isNewPatientSelected = value;
-                                });
-                              },
-                            ),
-                          ],
+                        const Text(
+                          'Nouveau patient ?',
+                          style: TextStyle(color: AppColors.darkgrey),
                         ),
-                        isNewPatientSelected
-                            ? Form(
-                                key: _formKey,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    TextFormField(
-                                      controller: newPatientNameController,
-                                      validator: (value) {
-                                        if (value!.isEmpty) {
-                                          return 'Veuillez entrer le nom du patient'; // Your error message
-                                        }
-                                        // You can add additional validation logic here.
-                                        return null; // Return null if the input is valid.
-                                      },
-                                      decoration: const InputDecoration(
-                                        hintText: 'Entrez le nom du patient...',
-                                        hintStyle: TextStyle(
-                                          color: AppColors.softGrey,
-                                        ),
-                                      ),
-                                    ),
-                                    TextField(
-                                      controller: newPatientMotifController,
-                                      decoration: const InputDecoration(
-                                        hintText: 'Motif du Patient...',
-                                        hintStyle: TextStyle(
-                                          color: AppColors.softGrey,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SizedBox(
-                                    height: 60,
-                                    width: 300,
-                                    child: TextField(
-                                      controller: patientNameController,
-                                      decoration: InputDecoration(
-                                        fillColor: AppColors.darkgrey,
-                                        focusColor: AppColors.pink,
-                                        hoverColor: AppColors.pink,
-                                        prefixIcon: const Icon(Icons.search),
-                                        hintText: 'Sélectionner un patient ...',
-                                        border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(15),
-                                        ),
-                                        suffixIcon: isListViewVisible
-                                            ? IconButton(
-                                                icon: const Icon(
-                                                    Icons.keyboard_arrow_down),
-                                                onPressed: hideListView,
-                                              )
-                                            : IconButton(
-                                                icon: const Icon(
-                                                    Icons.keyboard_arrow_left),
-                                                onPressed: showListView,
-                                              ),
-                                      ),
-                                      onChanged: (value) {
-                                        // You can add your logic here to show/hide the ListView and filter the items
-                                        filterPatientList(value);
-                                        if (value.isNotEmpty) {
-                                          // Text is not empty, show the ListView
-                                          showListView();
-                                        } else {
-                                          // Text is empty, hide the ListView
-                                          hideListView();
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                  if (isListViewVisible)
-                                    SizedBox(
-                                      width: 300,
-                                      height: 94,
-                                      child: Drawer(
-                                        child: ListView.builder(
-                                          itemCount:
-                                              filteredPatientNames.length,
-                                          itemBuilder: (context, index) {
-                                            return ListTile(
-                                              title: GestureDetector(
-                                                onTap: () {
-                                                  patientNameController.text =
-                                                      filteredPatientNames[
-                                                          index];
-                                                  hideListView();
-                                                },
-                                                child: Text(
-                                                    filteredPatientNames[
-                                                        index]),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                  TextFormField(
-                                    controller: patientMotifController,
-                                    decoration: const InputDecoration(
-                                        hintText: 'Motif du patient...',
-                                        hintStyle: TextStyle(
-                                          color: AppColors.softGrey,
-                                        )),
-                                  ),
-                                ],
-                              ),
+                        Switch(
+                          activeColor: AppColors.pink,
+                          value: isNewPatientSelected,
+                          onChanged: (value) {
+                            setState(() {
+                              isNewPatientSelected = value;
+                            });
+                          },
+                        ),
                       ],
                     ),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop(); // Close the dialog
-                        },
-                        child: const Text(
-                          'Annuler',
-                          style: TextStyle(
-                              color: AppColors.green,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          // Handle appointment scheduling logic here
-                          if (isNewPatientSelected) {
-                            if (_formKey.currentState!.validate()) {
-                              // Add a new patient with newPatientController.text
-                              print(
-                                  'New Patient Name: ${newPatientMotifController.text}');
-                              // Navigator.of(context).pop();
-                              controller.toggleUploading();
-                              controller.toggleSlotChanging(controller.slot);
-                              await widget.uploadBooking(
-                                newBooking:
-                                    controller.generateNewBookingForUploading(
-                                        controller.slot),
-                              );
-                              FastApi.takeAppointment(
-                                controller.slot,
-                                newPatientMotifController.text,
-                                patientName: newPatientMotifController.text,
-                              );
-
-                              controller.toggleUploading();
-                              controller.resetSelectedSlot();
-
-                              newPatientMotifController.clear();
-                              patientMotifController.clear();
-                              newPatientNameController.clear();
-                              Navigator.of(context).pop();
-                            }
-                          } else {
-                            // Use the selected patient (selectedPatient)
-                            print('Selected Patient: $selectedPatient');
-                            // Navigator.of(context).pop();
-                            controller.toggleUploading();
-                            controller.toggleSlotChanging(controller.slot);
-                            await widget.uploadBooking(
+                    isNewPatientSelected
+                        ? Form(
+                            key: _formKey,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                TextFormField(
+                                  controller: newPatientSecondNameController,
+                                  validator: (value) {
+                                    if (value!.isEmpty) {
+                                      return 'Veuillez entrer le nom du patient';
+                                    }
+                                    return null;
+                                  },
+                                  decoration: const InputDecoration(
+                                    hintText: 'Entrez le nom du patient...',
+                                    hintStyle: TextStyle(
+                                      color: AppColors.softGrey,
+                                    ),
+                                  ),
+                                ),
+                                TextFormField(
+                                  controller: newPatientFirstNameController,
+                                  validator: (value) {
+                                    if (value!.isEmpty) {
+                                      return 'Veuillez entrer le prénom du patient';
+                                    }
+                                    return null;
+                                  },
+                                  decoration: const InputDecoration(
+                                    hintText: 'Entrez le prénom du patient...',
+                                    hintStyle: TextStyle(
+                                      color: AppColors.softGrey,
+                                    ),
+                                  ),
+                                ),
+                                TextFormField(
+                                  controller: newPatientMotifController,
+                                  decoration: const InputDecoration(
+                                    hintText: 'Note',
+                                    hintStyle: TextStyle(
+                                      color: AppColors.softGrey,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                height: 60,
+                                width: 300,
+                                child: TextField(
+                                  controller: patientNameController,
+                                  decoration: InputDecoration(
+                                    fillColor: AppColors.darkgrey,
+                                    focusColor: AppColors.pink,
+                                    hoverColor: AppColors.pink,
+                                    prefixIcon: const Icon(Icons.search),
+                                    hintText: 'Sélectionner un patient ...',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                    suffixIcon: isListViewVisible
+                                        ? IconButton(
+                                            icon: const Icon(
+                                                Icons.keyboard_arrow_down),
+                                            onPressed: hideListView,
+                                          )
+                                        : IconButton(
+                                            icon: const Icon(
+                                                Icons.keyboard_arrow_left),
+                                            onPressed: showListView,
+                                          ),
+                                  ),
+                                  onChanged: (value) {
+                                    filterPatientList(value);
+                                    if (value.isNotEmpty) {
+                                      showListView();
+                                    } else {
+                                      hideListView();
+                                    }
+                                  },
+                                ),
+                              ),
+                              if (isListViewVisible)
+                                SizedBox(
+                                  width: 300,
+                                  height: 94,
+                                  child: Drawer(
+                                    child: ListView.builder(
+                                      itemCount: filteredPatientNames.length,
+                                      itemBuilder: (context, index) {
+                                        return ListTile(
+                                          title: GestureDetector(
+                                            onTap: () {
+                                              patientNameController.text =
+                                                  filteredPatientNames[index];
+                                              hideListView();
+                                            },
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 15.0),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(filteredPatientNames[
+                                                      index]),
+                                                  filteredPatientIsLocalList[
+                                                          index]
+                                                      ? const Row(
+                                                          children: [
+                                                            FaIcon(
+                                                              FontAwesomeIcons
+                                                                  .houseChimneyUser,
+                                                              size: 15,
+                                                            ),
+                                                            SizedBox(
+                                                              width: 10,
+                                                            ),
+                                                          ],
+                                                        )
+                                                      : const Text(''),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              TextFormField(
+                                onTap: () => hideListView(),
+                                controller: patientMotifController,
+                                decoration: const InputDecoration(
+                                    hintText: 'Motif du patient...',
+                                    hintStyle: TextStyle(
+                                      color: AppColors.softGrey,
+                                    )),
+                              ),
+                            ],
+                          ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close the dialog
+                    },
+                    child: const Text(
+                      'Annuler',
+                      style: TextStyle(
+                          color: AppColors.green, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      if (isNewPatientSelected) {
+                        if (_formKey.currentState!.validate()) {
+                          controller.toggleUploading();
+                          controller.toggleSlotChanging(controller.slot);
+                          await widget.uploadBooking(
                               newBooking:
                                   controller.generateNewBookingForUploading(
-                                      controller.slot),
-                            );
-                            FastApi.takeAppointment(
-                              controller.slot,
-                              patientMotifController.text,
-                              patientName: selectedPatient,
-                            );
-                            controller.toggleUploading();
-                            controller.resetSelectedSlot();
+                                      controller.slot));
+                          //don't forget to change the doctor_id =currentuser here and patientId is the patientSelelected from the ListView Above
+                          await FastApi.takeAppointmentForNewPatient(
+                              controller.base,
+                              '647e8660ae87a55a026142b7',
+                              newPatientFirstNameController.text,
+                              newPatientSecondNameController.text,
+                              patientMotifController.text);
 
-                            newPatientMotifController.clear();
-                            patientMotifController.clear();
-                            newPatientNameController.clear();
-                            Navigator.of(context).pop();
-                          }
-                          // Close the dialog
-                        },
-                        child: const Text(
-                          'Prendre rendez-vous',
-                          style: TextStyle(
-                              color: AppColors.green,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  );
-                });
-          },
-        ),
-      );
+                          controller.toggleUploading();
+                          controller.resetSelectedSlot();
+
+                          Navigator.of(context).pop();
+                          patientMotifController.clear();
+                          print(
+                              'New Patient Name: ${newPatientFirstNameController.text}');
+                        }
+                      } else {
+                        controller.toggleUploading();
+                        controller.toggleSlotChanging(controller.slot);
+                        await widget.uploadBooking(
+                            newBooking:
+                                controller.generateNewBookingForUploading(
+                                    controller.slot));
+                        //don't forget to change the doctor_id =currentuser here and patientId is the patientSelelected from the ListView Above
+                        FastApi.takeAppointment(
+                            controller.base,
+                            '647e8660ae87a55a026142b7',
+                            patientIds[filteredPatientNames.indexOf(
+                                patientNameController
+                                    .text)], //this is the I d of the patient selected from the list
+                            patientMotifController.text);
+                        controller.toggleUploading();
+                        controller.resetSelectedSlot();
+
+                        Navigator.of(context).pop();
+                        patientMotifController.clear();
+                        print(
+                            'Selected Patient: ${patientNameController.text}');
+                      }
+                    },
+                    child: const Text(
+                      'Prendre rendez-vous',
+                      style: TextStyle(
+                          color: AppColors.green, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -621,52 +679,9 @@ class _BookingDoctorCalendarMainState extends State<BookingDoctorCalendarMain>
                       ),
                     ],
                   ),
-                  SizedBox(
+                  const SizedBox(
                     height: 20,
                     width: double.infinity,
-                    child: Center(
-                      child: Visibility(
-                        visible: nextPage,
-                        child: Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 50,
-                                child: Transform.scale(
-                                  scaleX: 3.0,
-                                  child: IconButton(
-                                      iconSize: 15,
-                                      alignment: Alignment.topCenter,
-                                      hoverColor: AppColors.black,
-                                      onPressed: () {},
-                                      icon: const FaIcon(
-                                        FontAwesomeIcons.arrowLeftLong,
-                                        size: 15,
-                                        color: AppColors.pink,
-                                      )),
-                                ),
-                              ),
-                              SizedBox(
-                                width: 50,
-                                child: Transform.scale(
-                                  scaleX: 3.0,
-                                  child: IconButton(
-                                      iconSize: 15,
-                                      onPressed: () {},
-                                      icon: const FaIcon(
-                                        FontAwesomeIcons.arrowRightLong,
-                                        size: 15,
-                                        color: AppColors.pink,
-                                      )),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
                   ),
                   StreamBuilder<dynamic>(
                     stream: widget.getBookingStream(
@@ -695,9 +710,9 @@ class _BookingDoctorCalendarMainState extends State<BookingDoctorCalendarMain>
                           ? SingleChildScrollView(
                               child: widget.wholeDayIsBookedWidget!)
                           : SizedBox(
-                              height: 220,
+                              height: 400,
                               child: PageView(
-                                controller: MyPageController,
+                                controller: myPageController,
                                 children: [
                                   SingleChildScrollView(
                                     child: Column(
@@ -750,10 +765,24 @@ class _BookingDoctorCalendarMainState extends State<BookingDoctorCalendarMain>
                                               Padding(
                                                 padding: const EdgeInsets.only(
                                                     right: 5),
-                                                child: TextButton(
+                                                child: Container(
+                                                  width:
+                                                      180, // Adjust the width as needed
+                                                  decoration: BoxDecoration(
+                                                    color: AppColors.green,
+                                                    borderRadius:
+                                                        const BorderRadius.all(
+                                                            Radius.circular(
+                                                                24)),
+                                                    border: Border.all(
+                                                        color: AppColors
+                                                            .greySoligth,
+                                                        width: 2),
+                                                  ),
+                                                  child: TextButton(
                                                     onPressed: () {
                                                       nextPage = !nextPage;
-                                                      MyPageController.nextPage(
+                                                      myPageController.nextPage(
                                                         duration:
                                                             const Duration(
                                                                 milliseconds:
@@ -761,14 +790,39 @@ class _BookingDoctorCalendarMainState extends State<BookingDoctorCalendarMain>
                                                         curve: Curves.ease,
                                                       );
                                                     },
-                                                    child: const Text(
-                                                      'Mes Rendez-Vous >>>',
-                                                      style: TextStyle(
-                                                          fontSize: 14,
+                                                    style: ButtonStyle(
+                                                      padding:
+                                                          MaterialStateProperty
+                                                              .all(
+                                                        const EdgeInsets
+                                                                .symmetric(
+                                                            horizontal: 5),
+                                                      ),
+                                                    ),
+                                                    child: const Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceEvenly,
+                                                      children: [
+                                                        FaIcon(
+                                                          FontAwesomeIcons
+                                                              .arrowsRotate,
                                                           color: AppColors.pink,
-                                                          fontWeight:
-                                                              FontWeight.w500),
-                                                    )),
+                                                        ),
+                                                        Text(
+                                                          'Mes Rendez-Vous',
+                                                          style: TextStyle(
+                                                            fontSize: 14,
+                                                            color:
+                                                                AppColors.white,
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
                                               )
                                             ],
                                           ),
@@ -794,7 +848,7 @@ class _BookingDoctorCalendarMainState extends State<BookingDoctorCalendarMain>
                                                   width: 1, // Border width
                                                 ),
                                               ),
-                                              height: 185,
+                                              height: 200,
                                               // Set the desired height of the GridView here
                                               child: SingleChildScrollView(
                                                 child: Column(children: [
@@ -842,7 +896,7 @@ class _BookingDoctorCalendarMainState extends State<BookingDoctorCalendarMain>
                                                         }
                                                       }
 
-                                                      final Morningslot =
+                                                      final morningslot =
                                                           morningSlots
                                                               .elementAt(index);
                                                       return BookingSlot(
@@ -858,7 +912,7 @@ class _BookingDoctorCalendarMainState extends State<BookingDoctorCalendarMain>
                                                             .selectedSlotColor,
                                                         isPauseTime: controller
                                                             .isSlotInPauseTime(
-                                                                Morningslot),
+                                                                morningslot),
                                                         isBooked: controller
                                                             .isMorningSlotBooked(
                                                                 index,
@@ -869,15 +923,15 @@ class _BookingDoctorCalendarMainState extends State<BookingDoctorCalendarMain>
                                                         onTap: () => controller
                                                             .selectMorningSlot(
                                                                 index,
-                                                                Morningslot),
+                                                                morningslot),
                                                         child: Center(
                                                           child: Text(
                                                             widget.formatDateTime
                                                                     ?.call(
-                                                                        Morningslot) ??
+                                                                        morningslot) ??
                                                                 BookingUtil
                                                                     .formatDateTime(
-                                                                        Morningslot),
+                                                                        morningslot),
                                                             style:
                                                                 getTextStyle(),
                                                           ),
@@ -1007,117 +1061,37 @@ class _BookingDoctorCalendarMainState extends State<BookingDoctorCalendarMain>
                                             ),
                                           ],
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                  SingleChildScrollView(
-                                    child: Column(
-                                      children: [
-                                        SizedBox(
-                                          height: 200,
-                                          child: ListView(
-                                            children: const [
-                                              /*CommonCard(
-                                                borderRadius: BorderRadius.all(
-                                                    Radius.circular(20)),
-                                                color: AppColors.pink,
-                                                margin: EdgeInsets.all(10),
-                                                child: SizedBox(
-                                                    height: 40,
-                                                    child: Center(
-                                                        child:
-                                                            Text('patient 1'))),
-                                              ),*/
-                                              ListTile(
-                                                leading: FaIcon(
-                                                  FontAwesomeIcons
-                                                      .solidCircleUser,
-                                                  size: 50,
-                                                ),
-                                                title: Text(
-                                                    "Mohamed el Kosdoghli"),
-                                                subtitle: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceEvenly,
-                                                  children: [
-                                                    Text("Age:  54 ans"),
-                                                    SizedBox(
-                                                      width: 50,
-                                                    ),
-                                                    FaIcon(
-                                                      FontAwesomeIcons
-                                                          .userClock,
-                                                      size: 20,
-                                                    ),
-                                                    Text("oui"),
-                                                  ],
-                                                ),
-                                                trailing: FaIcon(
-                                                  FontAwesomeIcons
-                                                      .clipboardQuestion,
-                                                  size: 25,
-                                                ),
-                                              ),
-                                              CommonCard(
-                                                borderRadius: BorderRadius.all(
-                                                    Radius.circular(20)),
-                                                color: AppColors.pink,
-                                                margin: EdgeInsets.all(10),
-                                                child: ListTile(
-                                                  leading: FaIcon(
-                                                    FontAwesomeIcons
-                                                        .solidCircleUser,
-                                                    size: 40,
-                                                  ),
-                                                  title: Text(
-                                                      "Mohamed el Kosdoghli"),
-                                                  subtitle: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceEvenly,
-                                                    children: [
-                                                      Text("Age:  54 ans"),
-                                                      SizedBox(
-                                                        width: 50,
-                                                      ),
-                                                      FaIcon(
-                                                        FontAwesomeIcons
-                                                            .userClock,
-                                                        size: 20,
-                                                      ),
-                                                      Text("oui"),
-                                                    ],
-                                                  ),
-                                                  trailing: FaIcon(
-                                                    FontAwesomeIcons
-                                                        .clipboardQuestion,
-                                                    size: 25,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                        const SizedBox(
+                                          height: 20,
+                                        ),
+                                        CommonButton(
+                                          width: 200,
+                                          text: widget.bookingButtonText ??
+                                              'BOOK',
+                                          onTap: () => openDialog(context),
+                                          isDisabled: controller
+                                                      .selectedMorningSlot ==
+                                                  -1 &&
+                                              controller.selectedEveningSlot ==
+                                                  -1,
+                                          // isDesabled: controller.selectedSlot == -1,
+                                          buttonActiveColor:
+                                              widget.bookingButtonColor,
                                         ),
                                       ],
                                     ),
                                   ),
+                                  AcceptedAndWaitingDoctorAppointments(
+                                      controller: controller,
+                                      onChanged: () {
+                                        setState(() {
+                                          updateBookingState();
+                                        });
+                                      }),
                                 ],
                               ),
                             );
                     },
-                  ),
-                  const SizedBox(
-                    height: 8,
-                  ),
-                  CommonButton(
-                    width: 80,
-                    text: widget.bookingButtonText ?? 'BOOK',
-                    onTap: openDialog,
-                    isDisabled: controller.selectedMorningSlot == -1 &&
-                        controller.selectedEveningSlot == -1,
-                    // isDesabled: controller.selectedSlot == -1,
-                    buttonActiveColor: widget.bookingButtonColor,
                   ),
                 ],
               ),
